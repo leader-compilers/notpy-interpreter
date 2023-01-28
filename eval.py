@@ -255,7 +255,7 @@ def test6():
     body=block([b1, b2])
     e=while_loop(condition, body)
     assert eval_ast(e, None, name_space) == 0
-    eval_ast(get(j), None, name_space) == 3628800
+    assert eval_ast(get(j), None, name_space) == 3628800
 
 
 def test7():
