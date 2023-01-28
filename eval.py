@@ -1,4 +1,4 @@
-afrom typing import List
+from typing import List
 from dataclasses import dataclass
 from fractions import Fraction
 
