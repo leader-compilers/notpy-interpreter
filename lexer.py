@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Union
-from typing import Optional, NewType
 
 
 class EndOfTokens(Exception):
@@ -78,6 +77,7 @@ white_space = " \t\n"
 @dataclass
 class lexer:
     stream = None
+    save: TokenType = None
 
     def lexerFromStream(s):
         self = lexer()
@@ -144,6 +144,21 @@ class lexer:
             # some elif statements are still to be done
         except EndOfTokens:
             raise EndOfTokens()
+
+    def peek_token(self) -> TokenType:
+        if self.save is not None:
+            return self.save
+        self.save = self.next_token()
+        return self.save
+
+    def advance(self):
+        assert self.save is not None
+        self.save = None
+
+    def match(self, expected):
+        if self.peek_token() == expected:
+            return self.advance()
+        raise TokenError()
 
     def __iter__(self):
         return self
