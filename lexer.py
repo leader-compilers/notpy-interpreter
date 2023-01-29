@@ -69,7 +69,7 @@ class EndOfLine:
 
 TokenType = Num | Bool | Keyword | Identifier | Operator | EndOfLine | String
 keywords = "var true false print if else for while return end".split()
-operators = ", . ; + - * % >= <= == ! != **".split()
+operators = ", . ; + - * % > < >= <= == ! != ** ^".split()
 word_operators = "and or not quot rem"
 white_space = " \t\n"
 
@@ -184,6 +184,6 @@ def lexing_test2():
         print(token)
 
 
-lexing_test1()
-print("\n")
-lexing_test2()
+# lexing_test1()
+# print("\n")
+# lexing_test2()
