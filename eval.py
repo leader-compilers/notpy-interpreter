@@ -77,9 +77,12 @@ def ProgramNotSupported():
 
 
 
-def eval_ast(subprogram: AST, lexical_scope=None , mutable_variables={})-> Value:  #the mutable_variables dictionary acts as a global variable
+def eval_ast(subprogram: AST, lexical_scope=None , name_space =None)-> Value:  #the name_space dictionary acts as a global variable
     if lexical_scope is None:
         lexical_scope = {}
+    if name_space is None:
+        name_space = {}
+
 
     match subprogram:
 
@@ -91,24 +94,24 @@ def eval_ast(subprogram: AST, lexical_scope=None , mutable_variables={})-> Value
                 raise Exception("Variable not defined")
 
         case let(variable, e1, e2):
-            temp=eval_ast(e1, lexical_scope )
-            return eval_ast(e2, lexical_scope | {variable.name : temp} )
+            temp=eval_ast(e1, lexical_scope, name_space)
+            return eval_ast(e2, lexical_scope | {variable.name : temp}, name_space )
 
         case mut_var(name):
-            if name in mutable_variables:
-                return mutable_variables[name]
+            if name in name_space:
+                return name_space[name]
             else:
                 raise Exception("Variable not defined")
         
         case get(variable):
-            if variable.name in mutable_variables:
-                return mutable_variables[variable.name]
+            if variable.name in name_space:
+                return name_space[variable.name]
             else:
                 raise Exception("Variable not defined")
 
         case set(variable, value):
-            temp=eval_ast(value, lexical_scope )
-            mutable_variables[variable.name]=temp
+            temp=eval_ast(value, lexical_scope, name_space)
+            name_space[variable.name]=temp
             return Fraction(0) # return value of set is always 0
 
 
@@ -122,50 +125,57 @@ def eval_ast(subprogram: AST, lexical_scope=None , mutable_variables={})-> Value
 
         ## Arithmetic Operations
         case binary_operation("+", left, right):
-            return Fraction(eval_ast(left,lexical_scope ) + eval_ast(right,lexical_scope ))
+            return Fraction(eval_ast(left,lexical_scope, name_space) + eval_ast(right,lexical_scope, name_space ))
         case binary_operation("-", left, right):
-            return Fraction(eval_ast(left, lexical_scope ) - eval_ast(right, lexical_scope ))
+            return Fraction(eval_ast(left, lexical_scope, name_space) - eval_ast(right, lexical_scope, name_space))
         case binary_operation("*", left, right):
-            return Fraction(eval_ast(left, lexical_scope ) * eval_ast(right, lexical_scope ))
+            return Fraction(eval_ast(left, lexical_scope, name_space) * eval_ast(right, lexical_scope, name_space))
         case binary_operation("/", left, right):
             if eval_ast(right) == 0:
                 raise Exception("Division by zero")
-            return Fraction(eval_ast(left, lexical_scope ) / eval_ast(right, lexical_scope ))
+            return Fraction(eval_ast(left, lexical_scope, name_space ) / eval_ast(right, lexical_scope, name_space))
         case binary_operation("**", left, right):
-            return Fraction(eval_ast(left, lexical_scope ) ** eval_ast(right, lexical_scope ))
+            return Fraction(eval_ast(left, lexical_scope, name_space ) ** eval_ast(right, lexical_scope, name_space ))
         
         ## Boolean Operations
         case binary_operation("==", left, right):
-            return bool(eval_ast(left, lexical_scope ) == eval_ast(right, lexical_scope ))
+            return bool(eval_ast(left, lexical_scope, name_space ) == eval_ast(right, lexical_scope, name_space ))
         case binary_operation("!=", left, right):
-            return bool(eval_ast(left, lexical_scope ) != eval_ast(right, lexical_scope ))
+            return bool(eval_ast(left, lexical_scope, name_space ) != eval_ast(right, lexical_scope, name_space ))
         case binary_operation("<", left, right):
-            return bool(eval_ast(left, lexical_scope ) < eval_ast(right, lexical_scope ))
+            return bool(eval_ast(left, lexical_scope, name_space ) < eval_ast(right, lexical_scope, name_space ))
         case binary_operation(">", left, right):
-            return bool(eval_ast(left, lexical_scope ) > eval_ast(right, lexical_scope ))
+            return bool(eval_ast(left, lexical_scope, name_space ) > eval_ast(right, lexical_scope, name_space ))
         case binary_operation("&&", left, right):
-            return bool(eval_ast(left, lexical_scope ) and eval_ast(right, lexical_scope ))
+            return bool(eval_ast(left, lexical_scope, name_space ) and eval_ast(right, lexical_scope, name_space ))
         case binary_operation("||", left, right):
-            return bool(eval_ast(left, lexical_scope ) or eval_ast(right, lexical_scope ))
+            return bool(eval_ast(left, lexical_scope, name_space ) or eval_ast(right, lexical_scope, name_space ))
 
         ## If Statements
         case if_statement(condition, if_exp, else_exp):
-            if eval_ast(condition, lexical_scope ):
-                return eval_ast(if_exp, lexical_scope )
+            if eval_ast(condition, lexical_scope, name_space ):
+                return eval_ast(if_exp, lexical_scope, name_space )
             else:
-                return eval_ast(else_exp, lexical_scope )
+                return eval_ast(else_exp, lexical_scope, name_space )
 
         ## While Loops
         case while_loop(condition, body):
-            while eval_ast(condition, lexical_scope ):
-                eval_ast(body, lexical_scope )
+            while eval_ast(condition, lexical_scope, name_space ):
+                eval_ast(body, lexical_scope, name_space )
             return Fraction(0) # return value of while loop is always 0
 
         ## Blocks
-        case block(exps):
+        case block(exps): #using scoping as used in c++, inside loops, for funcitons, different scoping rules to be used.
+            #if value of declared variables is changed inside the block, it will be changed outside the block
+            #if new variables are declared inside the block, they will not be accessible outside the block
+            local_namespace=dict(name_space)
             for exp in exps:
-                eval_ast(exp, lexical_scope )
-            return Fraction(0) # return value of block is always 0        
+                eval_ast(exp, lexical_scope, local_namespace) 
+            for i in local_namespace:
+                if i in name_space:
+                    name_space[i]=local_namespace[i]
+            return Fraction(0) # return value of block is always 0    
+
         
         
 
@@ -234,18 +244,26 @@ def test5():
 
 #factorial funciton
 def test6():
+    name_space={}
     i=mut_var("i")
     j=mut_var("j")
-    eval_ast(set(i, numeric_literal(1)))
-    eval_ast(set(j, numeric_literal(1)))
+    eval_ast(set(i, numeric_literal(1)), None, name_space)
+    eval_ast(set(j, numeric_literal(1)), None, name_space)
     condition=binary_operation("<", get(i), numeric_literal(10))
     b1=set(i, binary_operation("+", get(i), numeric_literal(1)))
     b2=set(j, binary_operation("*", get(j), get(i)))
     body=block([b1, b2])
     e=while_loop(condition, body)
-    assert eval_ast(e) == 0
-    assert eval_ast(get(j)) == 3628800
+    assert eval_ast(e, None, name_space) == 0
+    assert eval_ast(get(j), None, name_space) == 3628800
 
+
+def test7():
+    name_space={} #initalising namespace
+    eval_ast(numeric_literal(0), None, name_space)
+    i=mut_var("x")
+    eval_ast(set(i, numeric_literal(1)),None, name_space)
+    assert (eval_ast(get(i),None, name_space))==1
 
 
 
@@ -255,3 +273,4 @@ test3()
 test4()
 test5()
 test6()
+test7()
