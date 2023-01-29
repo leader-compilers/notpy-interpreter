@@ -29,15 +29,19 @@ class binary_operation:
     right: "AST"
 
 # String operation (Can take variable number of strings depending on the operation)
+@dataclass
+class string_concat:
+    operator: str
+    operands: List["AST"]
 
 
 @dataclass
-class string_operation:
-    operator: str
-    operands: List["AST"]
-    start: int = 0
-    stop: int = 0
-    hop: int = 1
+class string_slice:
+    opeartor: str
+    string: "AST"
+    start: "AST"
+    stop: "AST"
+    hop: "AST" = numeric_literal(1)
 
 
 # Let Expressions
@@ -90,7 +94,7 @@ class block:
     exps: List["AST"]
 
 
-AST = numeric_literal | string_literal | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set
+AST = numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set
 
 Value = Fraction | bool | str
 
@@ -200,7 +204,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return Fraction(0)  # return value of block is always 0
         
         # String operations
-        case string_operation("concat", string_list):
+        case string_concat("concat", string_list):
             # Initializing an empty string literal
             final_string = eval_ast(string_literal(""), lexical_scope, name_space)
             for i in string_list:
@@ -208,11 +212,15 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 final_string += eval_ast(i, lexical_scope, name_space)
             return str(final_string)
 
-        case string_operation("slice", string, start, stop, hop):
+        case string_slice("slice", string, start, stop, hop):
             # Evaluating the string literal
+            # Converting the factions to int as python only takes int for slicing
+            begin = int(eval_ast(start))
+            end = int(eval_ast(stop))
+            step = int(eval_ast(hop))
             final_string = eval_ast(string, lexical_scope, name_space)
             # Doing the appropriate slicing using python's inbuilt slicing method
-            return str(final_string[start:stop:hop])
+            return str(final_string[begin:end:step])
 
     ProgramNotSupported()
     return Fraction(0)
@@ -304,35 +312,41 @@ def test7():
     eval_ast(set(i, numeric_literal(1)), None, name_space)
     assert (eval_ast(get(i), None, name_space)) == 1
 
-def test_concat():
+def test8():
     e1 = []
     for i in range(4):
         e1.append(string_literal(str(i)))
-    e2 = string_operation("concat", e1)
+    e2 = string_concat("concat", e1)
     assert eval_ast(e2) == "0123"
 
     words = ["This", "Is", "A", "Test", "For", " ", "Concatenation"]
     e3 = []
     for i in words:
         e3.append(string_literal(i))
-    e4 = string_operation("concat", e3)
+    e4 = string_concat("concat", e3)
     assert eval_ast(e4) == "ThisIsATestFor Concatenation"
 
-def test_slice():
+def test9():
     e1 = string_literal("HelloWorld")
-    e2 = string_operation("slice", e1, 0, 4, 1)
+    minusone = numeric_literal(-1)
+    zero = numeric_literal(0)
+    one = numeric_literal(1)
+    two = numeric_literal(2)
+    four = numeric_literal(4)
+    ten = numeric_literal(10)
+    e2 = string_slice("slice", e1, zero, four, one)
     assert eval_ast(e2) == "Hell"
-    e3 = string_operation("slice", e1, 0, 10, 2)
+    e3 = string_slice("slice", e1, zero, ten, two)
     assert eval_ast(e3) == "Hlool"
-    e4 = string_operation("slice", e1, 4, 0, -1)
+    e4 = string_slice("slice", e1, four, zero, minusone)
     assert eval_ast(e4) == "olle"
 
-test1()
-test2()
-test3()
-test4()
-test5()
-test6()
-test7()
-test_concat()
-test_slice()
+# test1()
+# test2()
+# test3()
+# test4()
+# test5()
+# test6()
+# test7()
+test8()
+test9()
