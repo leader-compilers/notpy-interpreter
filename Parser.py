@@ -102,8 +102,18 @@ class Parser:
 
     def parse_expr(self):
         match self.tokens.peek_token():
+            case Keyword("while"):
+                return self.parse_while()
             case _:
                 return self.parse_logic()
+    
+    def parse_while(self):
+        self.tokens.match(Keyword("while"))
+        c = self.parse_expr()
+        self.tokens.match(Keyword("do"))
+        b = self.parse_expr()
+        self.tokens.match(Keyword("end"))
+        return while_loop(c, b)
 
 @dataclass
 class NumType:

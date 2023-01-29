@@ -68,7 +68,7 @@ class EndOfLine:
 
 
 TokenType = Num | Bool | Keyword | Identifier | Operator | EndOfLine | String
-keywords = "var true false print if else for while return end".split()
+keywords = "var true false print if else for while return end do".split()
 operators = ", . ; + - * % > < >= <= == ! != ** ^".split()
 word_operators = "and or not quot rem"
 white_space = " \t\n"
