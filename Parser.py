@@ -5,14 +5,14 @@ from typing import Optional, NewType
 from lexer import *
 from eval import *
 
-@dataclass
 
+@dataclass
 class Parser:
     tokens: lexer
 
     def call_parser(tokens):
         return Parser(tokens)
-    
+
     def parse_primary(self):
         match self.tokens.peek_token():
             case Identifier(name):
@@ -24,7 +24,7 @@ class Parser:
             case Bool(value):
                 self.tokens.advance()
                 return bool_literal(value)
-            
+
     def parse_power(self):
         left = self.parse_primary()
         while True:
@@ -48,7 +48,7 @@ class Parser:
                 case _:
                     break
         return left
-    
+
     def parse_mult(self):
         left = self.parse_unary()
         while True:
@@ -72,7 +72,7 @@ class Parser:
                 case _:
                     break
         return left
-    
+
     def parse_comp(self):
         left = self.parse_add()
         match self.tokens.peek_token():
@@ -81,7 +81,7 @@ class Parser:
                 right = self.parse_add()
                 return binary_operation(op, left, right)
         return left
-    
+
     def parse_equal(self):
         left = self.parse_comp()
         match self.tokens.peek_token():
@@ -102,11 +102,13 @@ class Parser:
 
     def parse_expr(self):
         match self.tokens.peek_token():
+            case Keyword("if"):
+                return self.parse_if()
             case Keyword("while"):
                 return self.parse_while()
             case _:
                 return self.parse_logic()
-    
+
     def parse_while(self):
         self.tokens.match(Keyword("while"))
         c = self.parse_expr()
@@ -115,17 +117,30 @@ class Parser:
         self.tokens.match(Keyword("end"))
         return while_loop(c, b)
 
+    def parse_if(self):
+        self.lexer.match(Keyword("if"))
+        c = self.parse_expr()
+        self.lexer.match(Keyword("then"))
+        t = self.parse_expr()
+        self.lexer.match(Keyword("else"))
+        f = self.parse_expr()
+        self.lexer.match(Keyword("end"))
+        return if_statement(c, t, f)
+
+
 @dataclass
 class NumType:
     pass
+
 
 @dataclass
 class BoolType:
     pass
 
+
 SimType = NumType | BoolType
 
-AST = numeric_literal | bool_literal | binary_operation | let_var
+AST = numeric_literal | bool_literal | binary_operation | let_var | unary_operation | while_loop | if_statement
 
 TypedAST = NewType('TypedAST', AST)
 
@@ -136,11 +151,13 @@ class TypeError(Exception):
 
 def test_parse():
     def parse(string):
-        return Parser.parse_expr (
-            Parser.call_parser(lexer.lexerFromStream(Stream.streamFromString(string)))
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
         )
-    
+
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
     print(parse("a+b^c*d+a+b-c+d+e*f/g"))
 
-test_parse() # Uncomment to see the created ASTs.
+
+test_parse()  # Uncomment to see the created ASTs.
