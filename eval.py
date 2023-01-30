@@ -28,6 +28,11 @@ class binary_operation:
     left: "AST"
     right: "AST"
 
+@dataclass
+class unary_operation:
+    operator: str
+    operand: "AST"
+
 # String operation (Can take variable number of strings depending on the operation)
 @dataclass
 class string_concat:
@@ -94,7 +99,7 @@ class block:
     exps: List["AST"]
 
 
-AST = numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set
+AST = unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set
 
 Value = Fraction | bool | str
 
@@ -160,7 +165,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             if eval_ast(right) == 0:
                 raise Exception("Division by zero")
             return Fraction(eval_ast(left, lexical_scope, name_space) / eval_ast(right, lexical_scope, name_space))
-        case binary_operation("**", left, right):
+        case binary_operation("^", left, right):
             return Fraction(eval_ast(left, lexical_scope, name_space) ** eval_ast(right, lexical_scope, name_space))
 
         # Boolean Operations
@@ -202,6 +207,13 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 if i in name_space:
                     name_space[i] = local_namespace[i]
             return Fraction(0)  # return value of block is always 0
+
+        case unary_operation("!", condition):
+            value = eval_ast(condition, lexical_scope, name_space)
+            return not value
+
+        case unary_operation("-", condition):
+            return -(eval_ast(condition, lexical_scope, name_space))
         
         # String operations
         case string_concat("concat", string_list):
@@ -248,7 +260,7 @@ def test2():
     e2 = numeric_literal(5)
     e3 = numeric_literal(10)
     e4 = numeric_literal(5)
-    e5 = binary_operation("**", e2, e1)
+    e5 = binary_operation("^", e2, e1)
     e6 = binary_operation("*", e3, e4)
     e7 = binary_operation("/", e5, e6)
     assert eval_ast(e7) == Fraction(625, 50)
@@ -341,6 +353,31 @@ def test9():
     e4 = string_slice("slice", e1, four, zero, minusone)
     assert eval_ast(e4) == "olle"
 
+def test10():
+    e1 = numeric_literal(1)
+    e2 = numeric_literal(1)
+    e3 = unary_operation("!", binary_operation("==", e1, e2))
+    assert eval_ast(e3) == False
+
+    e1 = numeric_literal(1)
+    e2 = numeric_literal(0)
+    e3 = unary_operation("!", binary_operation("==", e1, e2))
+    assert eval_ast(e3) == True
+
+    # e1 = string_literal("Hello")
+    # e2 = string_literal("Hello")
+    # e3 = unary_operation("!", string_equality("==", e1, e2))
+    # assert eval_ast(e3) == True
+
+def test11():
+    e1 = numeric_literal(1)
+    e2 = unary_operation("-", e1)
+    assert eval_ast(e2) == -1
+
+    e1 = numeric_literal(-1)
+    e2 = unary_operation("-", e1)
+    assert eval_ast(e2) == 1
+
 # test1()
 # test2()
 # test3()
@@ -348,5 +385,7 @@ def test9():
 # test5()
 # test6()
 # test7()
-test8()
-test9()
+# test8()
+# test9()
+test10()
+test11()
