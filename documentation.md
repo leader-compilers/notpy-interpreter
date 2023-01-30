@@ -1,8 +1,12 @@
 # Lexing 
 We have made the following token types as for now: Num | Bool | Keyword | Identifier | Operator | EndOfLine | String
+<br>
 Keywords in our language: var true false print if else for while return end do
+<br>
 Symbolic operators in our language: , . ; + - * % > < >= <= == ! != ^ :
+<br>
 Word operators in our language: and or not quot rem
+<br>
 
 Lexer.py takes a string, converts into a stream of characters. The lexer class then separates the stream into tokens which are then used by the parse to convert them into ASTs.
 
