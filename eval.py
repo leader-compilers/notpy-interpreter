@@ -364,10 +364,10 @@ def test10():
     e3 = unary_operation("!", binary_operation("==", e1, e2))
     assert eval_ast(e3) == True
 
-    # e1 = string_literal("Hello")
-    # e2 = string_literal("Hello")
-    # e3 = unary_operation("!", string_equality("==", e1, e2))
-    # assert eval_ast(e3) == True
+    e1 = string_literal("Hello")
+    e2 = string_literal("Hello")
+    e3 = unary_operation("!", binary_operation("==", e1, e2))
+    assert eval_ast(e3) == False
 
 def test11():
     e1 = numeric_literal(1)
@@ -378,14 +378,14 @@ def test11():
     e2 = unary_operation("-", e1)
     assert eval_ast(e2) == 1
 
-# test1()
-# test2()
-# test3()
-# test4()
-# test5()
-# test6()
-# test7()
-# test8()
-# test9()
+test1()
+test2()
+test3()
+test4()
+test5()
+test6()
+test7()
+test8()
+test9()
 test10()
 test11()
