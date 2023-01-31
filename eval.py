@@ -93,13 +93,20 @@ class while_loop:
     condition: "AST"
     body: "AST"
 
+# For loop
+@dataclass
+class for_loop:
+    iterator: mut_var(None)
+    condition: "AST"
+    updation: "AST"
+    body: "AST"
 
 @dataclass
 class block:
     exps: List["AST"]
 
 
-AST = unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set
+AST = for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set
 
 Value = Fraction | bool | str
 
@@ -233,6 +240,12 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             final_string = eval_ast(string, lexical_scope, name_space)
             # Doing the appropriate slicing using python's inbuilt slicing method
             return str(final_string[begin:end:step])
+
+        case for_loop(iterator, condition, updation, body):
+            while eval_ast(condition, lexical_scope, name_space):
+                eval_ast(body, lexical_scope, name_space)
+                eval_ast(updation, lexical_scope, name_space)
+            return Fraction(0)
 
     ProgramNotSupported()
     return Fraction(0)
@@ -378,6 +391,31 @@ def test11():
     e2 = unary_operation("-", e1)
     assert eval_ast(e2) == 1
 
+def test12(): #For loop
+    name_space = {}
+
+    iterator = mut_var("i")
+    var = mut_var("var")
+    last_iterator = mut_var("last_iterator")
+
+    eval_ast(set(iterator, numeric_literal(0)), None, name_space)
+    eval_ast(set(var, numeric_literal(0)), None, name_space)
+    eval_ast(set(last_iterator, numeric_literal(0)), None, name_space)
+
+    condition = binary_operation("<", get(iterator), numeric_literal(5))
+    updation = set(iterator, binary_operation("+", get(iterator), numeric_literal(1)))
+
+    b1 = set(var, binary_operation("+", get(var), numeric_literal(1)))
+    b2 = set(last_iterator, get(iterator))
+    body = block([b1, b2])
+
+    e1 = for_loop(iterator, condition, updation, body)
+    assert eval_ast(e1, None, name_space) == 0
+    assert eval_ast(get(var), None, name_space) == 5
+    assert eval_ast(get(last_iterator), None, name_space) == 4
+    
+
+
 test1()
 test2()
 test3()
@@ -389,3 +427,4 @@ test8()
 test9()
 test10()
 test11()
+test12()
