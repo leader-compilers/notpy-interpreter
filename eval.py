@@ -7,6 +7,7 @@ from fractions import Fraction
 @dataclass
 class numeric_literal:
     value: Fraction
+
     def __init__(self, numerator, denominator=1):
         self.value = Fraction(numerator, denominator)
 
@@ -28,12 +29,15 @@ class binary_operation:
     left: "AST"
     right: "AST"
 
+
 @dataclass
 class unary_operation:
     operator: str
     operand: "AST"
 
 # String operation (Can take variable number of strings depending on the operation)
+
+
 @dataclass
 class string_concat:
     operator: str
@@ -55,8 +59,7 @@ class let_var:
     name: str
 
 
-
-#variables
+# variables
 @dataclass
 class let:
     variable: let_var
@@ -64,16 +67,17 @@ class let:
     e2: "AST"
 
 
-
 @dataclass
 class mut_var:
     name: str
+
 
 @dataclass
 class declare:
     variable: mut_var
     value: "AST"
-    
+
+
 @dataclass
 class get:
     variable: mut_var
@@ -101,6 +105,8 @@ class while_loop:
     body: "AST"
 
 # For loop
+
+
 @dataclass
 class for_loop:
     iterator: mut_var(None)
@@ -108,18 +114,19 @@ class for_loop:
     updation: "AST"
     body: "AST"
 
+
 @dataclass
 class block:
     exps: List["AST"]
-    
-    
-@dataclass 
+
+
+@dataclass
 class environment:
     scopes: list[dict]
-    
+
     def __init__(self):
-        self.scopes=[{}]
-    
+        self.scopes = [{}]
+
     def start_scope(self):
         self.scopes.append({})
 
@@ -128,7 +135,8 @@ class environment:
 
     def add_to_scope(self, name, value):
         if name in self.scopes[-1]:
-            raise Exception("Variable already defined, can't declare two variables with same name in same scope")
+            raise Exception(
+                "Variable already defined, can't declare two variables with same name in same scope")
         self.scopes[-1][name] = value
 
     def get_from_scope(self, name):
@@ -175,10 +183,11 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return eval_ast(e2, lexical_scope | {variable.name: temp}, name_space)
 
         case declare(variable, value):
-            name_space.add_to_scope(variable.name, eval_ast(value, lexical_scope, name_space))
+            name_space.add_to_scope(variable.name, eval_ast(
+                value, lexical_scope, name_space))
             return 0
-        
-        case mut_var(name): #eval_ast might never get this node as we are using get, however, it is still here for completeness
+
+        case mut_var(name):  # eval_ast might never get this node as we are using get, however, it is still here for completeness
             return name_space.get_from_scope(name)
             # if name in name_space:
             #     return name_space[name]
@@ -193,7 +202,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             #     raise Exception("Variable not defined")
 
         case set(variable, value):
-            name_space.update_scope(variable.name, eval_ast(value, lexical_scope, name_space))
+            name_space.update_scope(variable.name, eval_ast(
+                value, lexical_scope, name_space))
             # temp = eval_ast(value, lexical_scope, name_space)
             # name_space[variable.name] = temp
             return Fraction(0)  # return value of set is always 0
@@ -264,11 +274,12 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 
         case unary_operation("-", condition):
             return -(eval_ast(condition, lexical_scope, name_space))
-        
+
         # String operations
         case string_concat("concat", string_list):
             # Initializing an empty string literal
-            final_string = eval_ast(string_literal(""), lexical_scope, name_space)
+            final_string = eval_ast(string_literal(
+                ""), lexical_scope, name_space)
             for i in string_list:
                 # Traversing through the list of stings and concatenating them
                 final_string += eval_ast(i, lexical_scope, name_space)
@@ -376,12 +387,13 @@ def test6():
 
 
 def test7():
-    name_space = environment() # initalising namespace
+    name_space = environment()  # initalising namespace
     eval_ast(numeric_literal(0), None, name_space)
     i = mut_var("x")
     eval_ast(declare(i, numeric_literal(0)), None, name_space)
     eval_ast(set(i, numeric_literal(1)), None, name_space)
     assert (eval_ast(get(i), None, name_space)) == 1
+
 
 def test8():
     e1 = []
@@ -397,6 +409,7 @@ def test8():
     e4 = string_concat("concat", e3)
     assert eval_ast(e4) == "ThisIsATestFor Concatenation"
 
+
 def test9():
     e1 = string_literal("HelloWorld")
     minusone = numeric_literal(-1)
@@ -411,6 +424,7 @@ def test9():
     assert eval_ast(e3) == "Hlool"
     e4 = string_slice("slice", e1, four, zero, minusone)
     assert eval_ast(e4) == "olle"
+
 
 def test10():
     e1 = numeric_literal(1)
@@ -428,6 +442,7 @@ def test10():
     e3 = unary_operation("!", binary_operation("==", e1, e2))
     assert eval_ast(e3) == False
 
+
 def test11():
     e1 = numeric_literal(1)
     e2 = unary_operation("-", e1)
@@ -437,7 +452,8 @@ def test11():
     e2 = unary_operation("-", e1)
     assert eval_ast(e2) == 1
 
-def test12(): #For loop
+
+def test12():  # For loop
     name_space = environment()
 
     iterator = mut_var("i")
@@ -449,7 +465,8 @@ def test12(): #For loop
     eval_ast(declare(last_iterator, numeric_literal(0)), None, name_space)
 
     condition = binary_operation("<", get(iterator), numeric_literal(5))
-    updation = set(iterator, binary_operation("+", get(iterator), numeric_literal(1)))
+    updation = set(iterator, binary_operation(
+        "+", get(iterator), numeric_literal(1)))
 
     b1 = set(var, binary_operation("+", get(var), numeric_literal(1)))
     b2 = set(last_iterator, get(iterator))
@@ -459,24 +476,24 @@ def test12(): #For loop
     assert eval_ast(e1, None, name_space) == 0
     assert eval_ast(get(var), None, name_space) == 5
     assert eval_ast(get(last_iterator), None, name_space) == 4
-    
+
 
 def test13():
-    #checking working of enviroment for different scopes
-    name_space=environment()
-    i=mut_var("i")
-    eval_ast(declare(i,numeric_literal(0)),None,name_space)
-    b1=declare(i,numeric_literal(1))
-    b2=declare(i,numeric_literal(2))
-    b11=set(i,numeric_literal(10))
+    # checking working of enviroment for different scopes
+    name_space = environment()
+    i = mut_var("i")
+    eval_ast(declare(i, numeric_literal(0)), None, name_space)
+    b1 = declare(i, numeric_literal(1))
+    b2 = declare(i, numeric_literal(2))
+    b11 = set(i, numeric_literal(10))
 
-    body=block([b1,b11,b11])
-    body2=block([b2])
+    body = block([b1, b11, b11])
+    body2 = block([b2])
     eval_ast(body, None, name_space)
     eval_ast(body2, None, name_space)
-    assert eval_ast(get(i), None, name_space)==0
-    
-    
+    assert eval_ast(get(i), None, name_space) == 0
+
+
 test1()
 test2()
 test3()
