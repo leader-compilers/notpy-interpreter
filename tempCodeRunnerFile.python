@@ -1,0 +1,14 @@
+from dataclasses import dataclass
+
+class l:
+    value: list
+    def __init__(self):
+        self.value = []
+    
+
+a=l()
+
+a.value.append(1)
+
+b=l()
+print(b.value)

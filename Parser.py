@@ -24,6 +24,9 @@ class Parser:
             case Bool(value):
                 self.tokens.advance()
                 return bool_literal(value)
+            case String(value):
+                self.tokens.advance()
+                return string_literal(value)
 
     def parse_power(self):
         left = self.parse_primary()
@@ -106,6 +109,8 @@ class Parser:
                 return self.parse_if()
             case Keyword("while"):
                 return self.parse_while()
+            case Keyword("print"):
+                return self.parse_print()
             case _:
                 return self.parse_logic()
 
@@ -139,6 +144,15 @@ class Parser:
         body = self.parse_expr()
         self.lexer.match(Keyword("end"))
         return for_loop(iterator, condition, increment, body)
+    
+    def parse_print(self):
+        exprs = []
+        while True:
+            exprs.append(self.parse_expr())
+            if not self.tokens.peek_token().matches(","):
+                break
+            self.tokens.match(",")
+        return print_statement(exprs)
 
 @dataclass
 class NumType:
@@ -152,7 +166,7 @@ class BoolType:
 
 SimType = NumType | BoolType
 
-AST = numeric_literal | bool_literal | binary_operation | let_var | unary_operation | while_loop | if_statement
+AST = numeric_literal | bool_literal | string_literal | binary_operation | let_var | unary_operation | while_loop | if_statement 
 
 TypedAST = NewType('TypedAST', AST)
 
