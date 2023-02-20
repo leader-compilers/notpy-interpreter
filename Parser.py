@@ -105,6 +105,8 @@ class Parser:
 
     def parse_expr(self):
         match self.tokens.peek_token():
+            case Keyword("for"):
+                return self.parse_for()
             case Keyword("if"):
                 return self.parse_if()
             case Keyword("while"):
@@ -131,6 +133,19 @@ class Parser:
         f = self.parse_expr()
         self.lexer.match(Keyword("end"))
         return if_statement(c, t, f)
+
+    # for can be passed as while loop and some extra conditions
+    def parse_for(self):
+        self.tokens.match(Keyword("for"))
+        iterator = self.parse_expr()
+        self.tokens.match(Operator(";"))
+        condition = self.parse_expr()
+        self.tokens.match(Operator(";"))
+        increment = self.parse_expr()
+        self.tokens.match(Keyword("do"))
+        body = self.parse_expr()
+        self.tokens.match(Keyword("end"))
+        return for_loop(iterator, condition, increment, body)
     
     def parse_print(self):
         exprs = []
@@ -170,7 +185,7 @@ def test_parse():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("a+b^c*d+a+b-c+d+e*f/g"))
+    print(parse("for 1 ; 2 ; 3 do 4 end"))
 
 
 test_parse()  # Uncomment to see the created ASTs.
