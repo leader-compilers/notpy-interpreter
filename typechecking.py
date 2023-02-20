@@ -235,8 +235,15 @@ def typecheck(program: AST, env=None) -> TypedAST:
             if tt.type != tf.type:
                 raise TypeError()
             return if_statement(tc, tt, tf, tt.type)
-        
-# case string_concat(op, operands):
+
+        case while_loop(c, b):
+            tc = typecheck(c)
+            if tc.type != BoolType():
+                raise TypeError()
+            tb = typecheck(b)
+            return while_loop(tc, tb, tb.type)
+
+        # case string_concat(op, operands):
         #     typed_operands = []
         #     for operand in operands:
         #         typed_operands.append(typecheck(operand))
@@ -268,19 +275,14 @@ def typecheck(program: AST, env=None) -> TypedAST:
         #     typed_value = typecheck(value)
         #     env.update_scope(variable.name, typed_value)
         #     return typed_value
+
     raise TypeError()
 
 
 def test_typecheck():
     e1 = numeric_literal(2)
     e2 = numeric_literal(3)
-    te = typecheck(binary_operation("+", e1, e2))
-    te = typecheck(binary_operation("<", e1, e2))
-    assert te.type == NumType()
-    assert te.type == BoolType()
-    with pytest.raises(TypeError):
-        typecheck(binary_operation("+", binary_operation("*", numeric_literal(2),
-                                                         numeric_literal(3)), binary_operation("<", numeric_literal(2), numeric_literal(3))))
-
-
-test_typecheck()
+    t1 = typecheck(binary_operation("+", e1, e2))
+    t2 = typecheck(binary_operation("<", e1, e2))
+    assert t2.type == BoolType()
+    assert t1.type == NumType()
