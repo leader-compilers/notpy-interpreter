@@ -279,10 +279,16 @@ def typecheck(program: AST, env=None) -> TypedAST:
     raise TypeError()
 
 
-def test_typecheck():
+def test_1():
     e1 = numeric_literal(2)
     e2 = numeric_literal(3)
     t1 = typecheck(binary_operation("+", e1, e2))
     t2 = typecheck(binary_operation("<", e1, e2))
     assert t2.type == BoolType()
     assert t1.type == NumType()
+    with pytest.raises(TypeError):
+        typecheck(binary_operation("+", binary_operation("*", numeric_literal(2), numeric_literal(3)),
+                  binary_operation("<", numeric_literal(2), numeric_literal(3))))
+
+
+test_1()
