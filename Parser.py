@@ -155,6 +155,17 @@ class Parser:
                 break
             self.tokens.match(",")
         return print_statement(exprs)
+    
+    def parse_list(self):
+        self.tokens.match("[")
+        exprs = []
+        while True:
+            exprs.append(self.parse_expr())
+            if not self.tokens.peek_token().matches(","):
+                break
+            self.tokens.match(",")
+        self.tokens.match("]")
+        return list_literal(exprs)
 
 @dataclass
 class NumType:
