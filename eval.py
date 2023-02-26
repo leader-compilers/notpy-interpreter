@@ -40,13 +40,11 @@ class unary_operation:
 
 @dataclass
 class string_concat:
-    operator: str
     operands: List["AST"]
 
 
 @dataclass
 class string_slice:
-    opeartor: str
     string: "AST"
     start: "AST"
     stop: "AST"
@@ -119,6 +117,10 @@ class for_loop:
 class block:
     exps: List["AST"]
 
+@dataclass
+class Print:
+    exps: "AST"
+
 
 @dataclass
 class environment:
@@ -153,7 +155,7 @@ class environment:
         raise Exception("Variable not defined")
 
 
-AST = for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set | declare
+AST = Print | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set | declare
 
 Value = Fraction | bool | str
 
@@ -276,7 +278,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return -(eval_ast(condition, lexical_scope, name_space))
 
         # String operations
-        case string_concat("concat", string_list):
+        case string_concat(string_list):
             # Initializing an empty string literal
             final_string = eval_ast(string_literal(
                 ""), lexical_scope, name_space)
@@ -285,7 +287,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 final_string += eval_ast(i, lexical_scope, name_space)
             return str(final_string)
 
-        case string_slice("slice", string, start, stop, hop):
+        case string_slice(string, start, stop, hop):
             # Evaluating the string literal
             # Converting the factions to int as python only takes int for slicing
             begin = int(eval_ast(start))
@@ -300,6 +302,11 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 eval_ast(body, lexical_scope, name_space)
                 eval_ast(updation, lexical_scope, name_space)
             return Fraction(0)
+        
+        case Print(expr):
+            value = eval_ast(expr, lexical_scope, name_space)
+            print(value)
+            return value
 
     ProgramNotSupported()
     return Fraction(0)
@@ -399,14 +406,14 @@ def test8():
     e1 = []
     for i in range(4):
         e1.append(string_literal(str(i)))
-    e2 = string_concat("concat", e1)
+    e2 = string_concat(e1)
     assert eval_ast(e2) == "0123"
 
     words = ["This", "Is", "A", "Test", "For", " ", "Concatenation"]
     e3 = []
     for i in words:
         e3.append(string_literal(i))
-    e4 = string_concat("concat", e3)
+    e4 = string_concat(e3)
     assert eval_ast(e4) == "ThisIsATestFor Concatenation"
 
 
@@ -418,11 +425,11 @@ def test9():
     two = numeric_literal(2)
     four = numeric_literal(4)
     ten = numeric_literal(10)
-    e2 = string_slice("slice", e1, zero, four, one)
+    e2 = string_slice(e1, zero, four, one)
     assert eval_ast(e2) == "Hell"
-    e3 = string_slice("slice", e1, zero, ten, two)
+    e3 = string_slice(e1, zero, ten, two)
     assert eval_ast(e3) == "Hlool"
-    e4 = string_slice("slice", e1, four, zero, minusone)
+    e4 = string_slice(e1, four, zero, minusone)
     assert eval_ast(e4) == "olle"
 
 
@@ -493,6 +500,22 @@ def test13():
     eval_ast(body2, None, name_space)
     assert eval_ast(get(i), None, name_space) == 0
 
+def test14():
+    name_space = environment()
+    e1 = numeric_literal(1)
+    e2 = numeric_literal(2)
+    e3 = string_literal("Hello")
+    e4 = string_literal("World")
+    e5 = bool_literal(True)
+    e6 = mut_var("i")
+    e7 = binary_operation("+", e1, e2)
+    e8 = string_concat([e3, e4])
+    assert(eval_ast(Print(e1), None, name_space) == 1)
+    assert(eval_ast(Print(e3), None, name_space) == "Hello")
+    assert(eval_ast(Print(e5), None, name_space) == True)
+    assert(eval_ast(Print(e7), None, name_space) == 3)
+    assert(eval_ast(Print(e8), None, name_space) == "HelloWorld")
+
 
 test1()
 test2()
@@ -507,3 +530,4 @@ test10()
 test11()
 test12()
 test13()
+test14()
