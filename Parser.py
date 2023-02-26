@@ -111,7 +111,7 @@ class Parser:
                 return self.parse_if()
             case Keyword("while"):
                 return self.parse_while()
-            case Keyword("print"):
+            case Keyword("Print"):
                 return self.parse_print()
             case _:
                 return self.parse_logic()
@@ -148,12 +148,18 @@ class Parser:
         return for_loop(iterator, condition, increment, body)
     
     def parse_print(self):
+        self.tokens.match(Keyword("Print"))
+        # if self.tokens.peek_token().matches("("):
+        #     self.tokens.advance()
         exprs = []
         while True:
+            # if self.tokens.peek_token().matches(")"):
+            #     break
             exprs.append(self.parse_expr())
-            if not self.tokens.peek_token().matches(","):
-                break
-            self.tokens.match(",")
+            match self.tokens.peek_token():
+                case Operator(op) if op in ";":
+                    break
+            self.tokens.match(Operator(","))
         return print_statement(exprs)
 
 @dataclass
@@ -188,4 +194,17 @@ def test_parse():
     print(parse("for 1 ; 2 ; 3 do 4 end"))
 
 
-test_parse()  # Uncomment to see the created ASTs.
+# test_parse()  # Uncomment to see the created ASTs.
+
+def test_parse1():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+
+    # You should parse, evaluate and see whether the expression produces the expected value in your tests.
+    print(parse("Print 1, 2, 3;"))
+
+
+test_parse1()  # Uncomment to see the created ASTs.
