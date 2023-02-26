@@ -119,7 +119,7 @@ class block:
 
 @dataclass
 class Print:
-    exps: "AST"
+    exps: List["AST"]
 
 
 @dataclass
@@ -303,10 +303,14 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 eval_ast(updation, lexical_scope, name_space)
             return Fraction(0)
         
-        case Print(expr):
-            value = eval_ast(expr, lexical_scope, name_space)
-            print(value)
-            return value
+        case Print(expr_list):
+            return_val = ""
+            for expr in expr_list:
+                value = eval_ast(expr, lexical_scope, name_space)
+                return_val += str(value)
+                print(value, end = " ")
+            print("")
+            return return_val
 
     ProgramNotSupported()
     return Fraction(0)
@@ -500,7 +504,7 @@ def test13():
     eval_ast(body2, None, name_space)
     assert eval_ast(get(i), None, name_space) == 0
 
-def test14():
+def test14(): ## Test for print
     name_space = environment()
     e1 = numeric_literal(1)
     e2 = numeric_literal(2)
@@ -508,13 +512,16 @@ def test14():
     e4 = string_literal("World")
     e5 = bool_literal(True)
     e6 = mut_var("i")
+    eval_ast(declare(e6, numeric_literal(0)), None, name_space)
     e7 = binary_operation("+", e1, e2)
     e8 = string_concat([e3, e4])
-    assert(eval_ast(Print(e1), None, name_space) == 1)
-    assert(eval_ast(Print(e3), None, name_space) == "Hello")
-    assert(eval_ast(Print(e5), None, name_space) == True)
-    assert(eval_ast(Print(e7), None, name_space) == 3)
-    assert(eval_ast(Print(e8), None, name_space) == "HelloWorld")
+
+    assert(eval_ast(Print([e1]), None, name_space) == "1")
+    assert(eval_ast(Print([e3]), None, name_space) == "Hello")
+    assert(eval_ast(Print([e5]), None, name_space) == "True")
+    assert(eval_ast(Print([e7]), None, name_space) == "3")
+    assert(eval_ast(Print([e8]), None, name_space) == "HelloWorld")
+    assert(eval_ast(Print([e1, e2, e3, e4, e5, e6]), None, name_space) == "12HelloWorldTrue0")
 
 
 test1()
