@@ -118,7 +118,7 @@ class block:
     exps: List["AST"]
 
 @dataclass
-class Print:
+class print_statement:
     exps: List["AST"]
 
 
@@ -155,7 +155,7 @@ class environment:
         raise Exception("Variable not defined")
 
 
-AST = Print | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set | declare
+AST = print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set | declare
 
 Value = Fraction | bool | str
 
@@ -303,7 +303,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 eval_ast(updation, lexical_scope, name_space)
             return Fraction(0)
         
-        case Print(expr_list):
+        case print_statement(expr_list):
             return_val = ""
             for expr in expr_list:
                 value = eval_ast(expr, lexical_scope, name_space)
@@ -516,12 +516,12 @@ def test14(): ## Test for print
     e7 = binary_operation("+", e1, e2)
     e8 = string_concat([e3, e4])
 
-    assert(eval_ast(Print([e1]), None, name_space) == "1")
-    assert(eval_ast(Print([e3]), None, name_space) == "Hello")
-    assert(eval_ast(Print([e5]), None, name_space) == "True")
-    assert(eval_ast(Print([e7]), None, name_space) == "3")
-    assert(eval_ast(Print([e8]), None, name_space) == "HelloWorld")
-    assert(eval_ast(Print([e1, e2, e3, e4, e5, e6]), None, name_space) == "12HelloWorldTrue0")
+    assert(eval_ast(print_statement([e1]), None, name_space) == "1")
+    assert(eval_ast(print_statement([e3]), None, name_space) == "Hello")
+    assert(eval_ast(print_statement([e5]), None, name_space) == "True")
+    assert(eval_ast(print_statement([e7]), None, name_space) == "3")
+    assert(eval_ast(print_statement([e8]), None, name_space) == "HelloWorld")
+    assert(eval_ast(print_statement([e1, e2, e3, e4, e5, e6]), None, name_space) == "12HelloWorldTrue0")
 
 
 test1()

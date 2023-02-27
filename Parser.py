@@ -111,8 +111,10 @@ class Parser:
                 return self.parse_if()
             case Keyword("while"):
                 return self.parse_while()
-            case Keyword("Print"):
+            case Keyword("print"):
                 return self.parse_print()
+            case Keyword("List"):
+                return self.parse_List()
             case _:
                 return self.parse_logic()
 
@@ -148,7 +150,7 @@ class Parser:
         return for_loop(iterator, condition, increment, body)
     
     def parse_print(self):
-        self.tokens.match(Keyword("Print"))
+        self.tokens.match(Keyword("print"))
         # if self.tokens.peek_token().matches("("):
         #     self.tokens.advance()
         exprs = []
@@ -161,6 +163,17 @@ class Parser:
                     break
             self.tokens.match(Operator(","))
         return print_statement(exprs)
+    
+    def parse_List(self):
+        self.tokens.match(Keyword("List"))
+        values = []
+        while True:
+            values.append(self.parse_expr())
+            match self.tokens.peek_token():
+                case Operator(op) if op in ";":
+                    break
+            self.tokens.match(Operator(","))
+        return Lists(values)
 
 @dataclass
 class NumType:
@@ -204,7 +217,19 @@ def test_parse1():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("Print 1, 2, 3;"))
+    print(parse("print 1, 2, 3;"))
 
 
-test_parse1()  # Uncomment to see the created ASTs.
+# test_parse1() # Uncomment to see the created ASTs.
+
+def test_parse2():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+
+    # You should parse, evaluate and see whether the expression produces the expected value in your tests.
+    print(parse("List 1, 2, 3;"))
+
+test_parse2()
