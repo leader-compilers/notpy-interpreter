@@ -24,6 +24,9 @@ class Parser:
             case Bool(value):
                 self.tokens.advance()
                 return bool_literal(value)
+            case String(value):
+                self.tokens.advance()
+                return string_literal(value)
 
     def parse_power(self):
         left = self.parse_primary()
@@ -102,10 +105,16 @@ class Parser:
 
     def parse_expr(self):
         match self.tokens.peek_token():
+            case Keyword("for"):
+                return self.parse_for()
             case Keyword("if"):
                 return self.parse_if()
             case Keyword("while"):
                 return self.parse_while()
+            case Keyword("print"):
+                return self.parse_print()
+            case Keyword("List"):
+                return self.parse_List()
             case _:
                 return self.parse_logic()
 
@@ -127,6 +136,44 @@ class Parser:
         self.lexer.match(Keyword("end"))
         return if_statement(c, t, f)
 
+    # for can be passed as while loop and some extra conditions
+    def parse_for(self):
+        self.tokens.match(Keyword("for"))
+        iterator = self.parse_expr()
+        self.tokens.match(Operator(";"))
+        condition = self.parse_expr()
+        self.tokens.match(Operator(";"))
+        increment = self.parse_expr()
+        self.tokens.match(Keyword("do"))
+        body = self.parse_expr()
+        self.tokens.match(Keyword("end"))
+        return for_loop(iterator, condition, increment, body)
+    
+    def parse_print(self):
+        self.tokens.match(Keyword("print"))
+        # if self.tokens.peek_token().matches("("):
+        #     self.tokens.advance()
+        exprs = []
+        while True:
+            # if self.tokens.peek_token().matches(")"):
+            #     break
+            exprs.append(self.parse_expr())
+            match self.tokens.peek_token():
+                case Operator(op) if op in ";":
+                    break
+            self.tokens.match(Operator(","))
+        return print_statement(exprs)
+    
+    def parse_List(self):
+        self.tokens.match(Keyword("List"))
+        values = []
+        while True:
+            values.append(self.parse_expr())
+            match self.tokens.peek_token():
+                case Operator(op) if op in ";":
+                    break
+            self.tokens.match(Operator(","))
+        return Lists(values)
 
 @dataclass
 class NumType:
@@ -140,7 +187,7 @@ class BoolType:
 
 SimType = NumType | BoolType
 
-AST = numeric_literal | bool_literal | binary_operation | let_var | unary_operation | while_loop | if_statement
+AST = numeric_literal | bool_literal | string_literal | binary_operation | let_var | unary_operation | while_loop | if_statement 
 
 TypedAST = NewType('TypedAST', AST)
 
@@ -157,7 +204,32 @@ def test_parse():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("a+b^c*d+a+b-c+d+e*f/g"))
+    print(parse("for 1 ; 2 ; 3 do 4 end"))
 
 
-test_parse()  # Uncomment to see the created ASTs.
+# test_parse()  # Uncomment to see the created ASTs.
+
+def test_parse1():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+
+    # You should parse, evaluate and see whether the expression produces the expected value in your tests.
+    print(parse("print 1, 2, 3;"))
+
+
+# test_parse1() # Uncomment to see the created ASTs.
+
+def test_parse2():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+
+    # You should parse, evaluate and see whether the expression produces the expected value in your tests.
+    print(parse("List 1, 2, 3;"))
+
+test_parse2()
