@@ -105,6 +105,8 @@ class Parser:
 
     def parse_expr(self):
         match self.tokens.peek_token():
+            case Keyword("let"):
+                return self.parse_let()
             case Keyword("for"):
                 return self.parse_for()
             case Keyword("if"):
@@ -174,6 +176,16 @@ class Parser:
                     break
             self.tokens.match(Operator(","))
         return Lists(values)
+    
+    def parse_let(self):
+        self.tokens.match(Keyword("let"))
+        name = self.tokens.peek_token()
+        self.tokens.advance()
+        self.tokens.match(Operator("="))
+        value = self.parse_expr()
+        self.tokens.match(Keyword("in"))
+        body = self.parse_expr()
+        return let(name, value, body)
 
 @dataclass
 class NumType:
@@ -230,6 +242,6 @@ def test_parse2():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("List 1, 2, 3;"))
+    print(parse("let a = 1 in a + 2"))
 
 test_parse2()
