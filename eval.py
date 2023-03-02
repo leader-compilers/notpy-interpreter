@@ -35,9 +35,8 @@ class unary_operation:
     operator: str
     operand: "AST"
 
+
 # String operation (Can take variable number of strings depending on the operation)
-
-
 @dataclass
 class string_concat:
     operands: List["AST"]
@@ -329,8 +328,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         # String operations
         case string_concat(string_list):
             # Initializing an empty string literal
-            final_string = eval_ast(string_literal(
-                ""), lexical_scope, name_space)
+            final_string = ""
             for i in string_list:
                 # Traversing through the list of stings and concatenating them
                 final_string += eval_ast(i, lexical_scope, name_space)
@@ -382,11 +380,11 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 return True
             return False
         case cons(expr1, expr2):
-            our_list = expr2.value
+            our_list = eval_ast(expr2)
             output_list = []
             output_list.append(eval_ast(expr1, lexical_scope, name_space))
             for i in range(len(our_list)):
-                output_list.append(eval_ast(our_list[i], lexical_scope, name_space))
+                output_list.append(our_list[i])
             return output_list
 
 
@@ -482,7 +480,7 @@ def test7():
     assert (eval_ast(get(i), None, name_space)) == 1
 
 
-def test8():
+def test8(): # String concatenation tests
     e1 = []
     for i in range(4):
         e1.append(string_literal(str(i)))
@@ -497,7 +495,7 @@ def test8():
     assert eval_ast(e4) == "ThisIsATestFor Concatenation"
 
 
-def test9():
+def test9(): # String slice tests
     e1 = string_literal("HelloWorld")
     minusone = numeric_literal(-1)
     zero = numeric_literal(0)
@@ -513,7 +511,7 @@ def test9():
     assert eval_ast(e4) == "olle"
 
 
-def test10():
+def test10(): # Unary operation tests
     e1 = numeric_literal(1)
     e2 = numeric_literal(1)
     e3 = unary_operation("!", binary_operation("==", e1, e2))
@@ -530,7 +528,7 @@ def test10():
     assert eval_ast(e3) == False
 
 
-def test11():
+def test11(): # Unary operation tests
     e1 = numeric_literal(1)
     e2 = unary_operation("-", e1)
     assert eval_ast(e2) == -1
@@ -540,7 +538,7 @@ def test11():
     assert eval_ast(e2) == 1
 
 
-def test12():  # For loop
+def test12():  # For loop tests
     name_space = environment()
 
     iterator = mut_var("i")
@@ -605,52 +603,40 @@ def test15(): ## Test for List operations
     name_space = environment()
     e1 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
     assert(eval_ast(e1, None, name_space) == [1, 2, 3])
-
     e2 = binary_operation(".", e1, head)
     assert(eval_ast(e2, None, name_space) == 1)
-
     e3 = binary_operation(".", e1, tail)
     assert(eval_ast(e3, None, name_space) == [2, 3])
-
     e4 = binary_operation(".", e1, is_empty)
     assert(eval_ast(e4, None, name_space) == False)
-
     e5 = binary_operation(".", e3, head)
     assert(eval_ast(e5, None, name_space) == 2)
-
     e6 = Lists([e1, numeric_literal(4), numeric_literal(5), numeric_literal(6)])
     assert(eval_ast(e6, None, name_space) == [[1, 2, 3], 4, 5, 6])
-
     e7 = binary_operation(".", e6, head)
     assert(eval_ast(e7, None, name_space) == [1, 2, 3])
-
     e9 = binary_operation(".", e7, is_empty)
     assert(eval_ast(e9, None, name_space) == False)
-
     e8 = binary_operation(".", e6, tail)
     assert(eval_ast(e8, None, name_space) == [4, 5, 6])
-
     matrix = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([string_literal("4"), string_literal("5"), string_literal("6")]), Lists([bool_literal(True), bool_literal(True), bool_literal(False)])])
     assert(eval_ast(matrix, None, name_space) == [[1, 2, 3], ["4", "5", "6"], [True, True, False]])
-
     e9 = binary_operation(".", matrix, tail)
     assert(eval_ast(e9, None, name_space) == [["4", "5", "6"], [True, True, False]])
-
     e10 = binary_operation(".", e9, head)
     assert(eval_ast(e10, None, name_space) == ["4", "5", "6"])
-
     e11 = cons(numeric_literal(-1), e1)
     assert(eval_ast(e11, None, name_space) == [-1, 1, 2, 3])
-
     e12 = binary_operation(".", e11, head)
     assert(eval_ast(e12, None, name_space) == -1)
-
     e13 = binary_operation(".", e11, tail)
     assert(eval_ast(e13, None, name_space) == [1, 2, 3])
-
     e14 = binary_operation(".", e13, head)
     assert(eval_ast(e14, None, name_space) == 1)
-
+    e15 = cons(e11, matrix)
+    assert(eval_ast(e15, None, name_space) == [[-1, 1, 2, 3], [1, 2, 3], ["4", "5", "6"], [True, True, False]])
+    e16 = cons(e11, e9)
+    assert(eval_ast(e16, None, name_space) == [[-1, 1, 2, 3], ["4", "5", "6"], [True, True, False]])
 
 test1()
 test2()
