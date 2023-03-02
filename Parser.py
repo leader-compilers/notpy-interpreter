@@ -127,13 +127,13 @@ class Parser:
         return while_loop(c, b)
 
     def parse_if(self):
-        self.lexer.match(Keyword("if"))
+        self.tokens.match(Keyword("if"))
         c = self.parse_expr()
-        self.lexer.match(Keyword("then"))
+        self.tokens.match(Keyword("then"))
         t = self.parse_expr()
-        self.lexer.match(Keyword("else"))
+        self.tokens.match(Keyword("else"))
         f = self.parse_expr()
-        self.lexer.match(Keyword("end"))
+        self.tokens.match(Keyword("end"))
         return if_statement(c, t, f)
 
     # for can be passed as while loop and some extra conditions
