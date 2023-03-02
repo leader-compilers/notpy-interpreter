@@ -32,7 +32,12 @@ We have defined the CFG as follows:
 
 
 ```
-expr —> log-exp
+expr —> log-exp | List | print | while | if | for
+while —> "while" expr "do" expr "end"
+if —> "if" expr "then" expr "else" expr "end"
+for —> "for" expr ";" expr ";" expr "do" expr "end"
+print —> "print" expr ";"
+List —> "List" expr ";"
 log-exp —> equality(&&,||)log-exp | equality
 equality —> comp(==,!=)comp | comp
 comp —> add(>, <, >=, <=)add | add
@@ -46,3 +51,5 @@ primary —> Num | Bool | Keyword | Identifier | Operator | EndOfLine | String
 Some points to note:-
 We have allowed nesting of unary operators.
 We have not allowed nesting of comp (comparison operators) and equality.
+
+The implementation of the parser follows the recursive descent parsing technique. The parser class takes a list of tokens as input and then converts them into an AST. The AST is then used by the interpreter to evaluate the program. The parser class has a method for each non-terminal symbol in the CFG. The method for each non-terminal symbol takes a list of tokens as input and returns the AST for that non-terminal symbol. 
