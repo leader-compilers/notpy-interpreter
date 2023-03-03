@@ -117,6 +117,7 @@ class for_loop:
 class block:
     exps: List["AST"]
 
+
 @dataclass
 class print_statement:
     exps: List["AST"]
@@ -153,40 +154,65 @@ class environment:
                 scope[name] = value
                 return
         raise Exception("Variable not defined")
-    
+
 
 @dataclass
 class Lists:
     value: List["AST"]
+
 
 @dataclass
 class cons:
     value: "AST"
     list: "AST"
 
+
 @dataclass
 class is_empty:
     list: "AST" = Lists([])
 
+
 @dataclass
 class head:
     list: "AST" = Lists([])
+
 
 @dataclass
 class tail:
     list: "AST" = Lists([])
 
 
+# Functions
+
+@dataclass
+class Function:
+    name: mut_var
+    parameters: List['AST']
+    body: 'AST'
+    expr: 'AST'
+
+@dataclass
+class FunctionCall:
+    function: 'AST'
+    arguments: List['AST']
+    
+@dataclass #to keep track of the function name and its parameters in our environment
+class FunctionObject:
+     parameters: List['AST']
+     body: 'AST'
+    
 AST = Lists | cons | is_empty | head | tail | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | mut_var | get | set | declare
 
-Value = Fraction | bool | str 
+Value = Fraction | bool | str
 
 
 def ProgramNotSupported():
     raise Exception(
         "Program not supported, it may be in the future versions of the language")
 
-## Reconstructs the AST given the return value of eval_ast for lists
+# Reconstructs the AST given the return value of eval_ast for lists
+
+
 def remake(new_list):
     for i in range(len(new_list)):
         if type(new_list[i]) == Fraction:
@@ -256,7 +282,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         case Lists(value):
             output_list = []
             for i in range(len(value)):
-                output_list.append(eval_ast(value[i], lexical_scope, name_space))
+                output_list.append(
+                    eval_ast(value[i], lexical_scope, name_space))
             return output_list
 
         # Arithmetic Operations
@@ -286,14 +313,13 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return bool(eval_ast(left, lexical_scope, name_space) and eval_ast(right, lexical_scope, name_space))
         case binary_operation("||", left, right):
             return bool(eval_ast(left, lexical_scope, name_space) or eval_ast(right, lexical_scope, name_space))
-        
+
         # Binary List operations
         case binary_operation(".", left, right):
             new_list = eval_ast(left, lexical_scope, name_space)
             # Change the datatype of the list values to the types defined in our language
             new_list = remake(new_list)
             return eval_ast(right(new_list), lexical_scope, name_space)
-
 
         # If Statements
         case if_statement(condition, if_exp, else_exp):
@@ -351,17 +377,17 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 eval_ast(body, lexical_scope, name_space)
                 eval_ast(updation, lexical_scope, name_space)
             return Fraction(0)
-        
+
         # Print statements
         case print_statement(expr_list):
             return_val = ""
             for expr in expr_list:
                 value = eval_ast(expr, lexical_scope, name_space)
                 return_val += str(value)
-                print(value, end = " ")
+                print(value, end=" ")
             print("")
             return return_val
-        
+
         # List operations
         case head(expr):
             our_list = expr.value
@@ -374,7 +400,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 raise Exception("Empty list")
             output_list = []
             for i in range(1, len(our_list)):
-                output_list.append(eval_ast(our_list[i], lexical_scope, name_space))
+                output_list.append(
+                    eval_ast(our_list[i], lexical_scope, name_space))
             return output_list
         case is_empty(expr):
             our_list = expr.value
@@ -386,9 +413,29 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             output_list = []
             output_list.append(eval_ast(expr1, lexical_scope, name_space))
             for i in range(len(our_list)):
-                output_list.append(eval_ast(our_list[i], lexical_scope, name_space))
+                output_list.append(
+                    eval_ast(our_list[i], lexical_scope, name_space))
             return output_list
-
+        
+        #Functions
+        case Function(mut_var(name), parameters, body, expr):
+            name_space.start_scope()
+            name_space.add_to_scope(name, FunctionObject(parameters, body))
+            v = eval_ast(expr, lexical_scope, name_space)
+            name_space.end_scope()
+            return v
+         
+        case FunctionCall(mut_var(name), arguments):
+            function = name_space.get_from_scope(name)
+            argv = []
+            for arg in arguments:
+                argv.append(eval_ast(arg, lexical_scope, name_space))
+            name_space.start_scope()
+            for parameter, arg in zip(function.parameters, argv):
+                name_space.add_to_scope(parameter.name, arg)
+            v = eval_ast(function.body, lexical_scope, name_space)
+            name_space.end_scope()
+            return v
 
     ProgramNotSupported()
     return Fraction(0)
@@ -396,6 +443,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 # Tests
 
 # basic arithmetic
+
+
 def test1():
     e1 = numeric_literal(4)
     e2 = numeric_literal(5)
@@ -581,7 +630,7 @@ def test13():
     assert eval_ast(get(i), None, name_space) == 0
 
 
-def test14(): ## Test for print
+def test14():  # Test for print
     name_space = environment()
     e1 = numeric_literal(1)
     e2 = numeric_literal(2)
@@ -598,10 +647,11 @@ def test14(): ## Test for print
     assert(eval_ast(print_statement([e5]), None, name_space) == "True")
     assert(eval_ast(print_statement([e7]), None, name_space) == "3")
     assert(eval_ast(print_statement([e8]), None, name_space) == "HelloWorld")
-    assert(eval_ast(print_statement([e1, e2, e3, e4, e5, e6]), None, name_space) == "12HelloWorldTrue0")
+    assert(eval_ast(print_statement(
+        [e1, e2, e3, e4, e5, e6]), None, name_space) == "12HelloWorldTrue0")
 
 
-def test15(): ## Test for List operations
+def test15():  # Test for List operations
     name_space = environment()
     e1 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
     assert(eval_ast(e1, None, name_space) == [1, 2, 3])
@@ -630,11 +680,14 @@ def test15(): ## Test for List operations
     e8 = binary_operation(".", e6, tail)
     assert(eval_ast(e8, None, name_space) == [4, 5, 6])
 
-    matrix = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([string_literal("4"), string_literal("5"), string_literal("6")]), Lists([bool_literal(True), bool_literal(True), bool_literal(False)])])
-    assert(eval_ast(matrix, None, name_space) == [[1, 2, 3], ["4", "5", "6"], [True, True, False]])
+    matrix = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([string_literal(
+        "4"), string_literal("5"), string_literal("6")]), Lists([bool_literal(True), bool_literal(True), bool_literal(False)])])
+    assert(eval_ast(matrix, None, name_space) == [
+           [1, 2, 3], ["4", "5", "6"], [True, True, False]])
 
     e9 = binary_operation(".", matrix, tail)
-    assert(eval_ast(e9, None, name_space) == [["4", "5", "6"], [True, True, False]])
+    assert(eval_ast(e9, None, name_space) == [
+           ["4", "5", "6"], [True, True, False]])
 
     e10 = binary_operation(".", e9, head)
     assert(eval_ast(e10, None, name_space) == ["4", "5", "6"])
@@ -652,6 +705,19 @@ def test15(): ## Test for List operations
     assert(eval_ast(e14, None, name_space) == 1)
 
 
+def test15():
+    name_space = environment()
+    i = mut_var("i")
+    j = mut_var("j")
+    fn = mut_var("fn")
+    program = binary_operation ("+", FunctionCall(fn, [numeric_literal(15), numeric_literal(2)]),
+            FunctionCall(fn, [numeric_literal(12), numeric_literal(3)])
+    )
+    e = Function(
+         fn, [i,j], binary_operation("+", i, j), program
+    )
+    assert eval_ast(e,None, name_space) == (15+2)+(12+3)
+
 test1()
 test2()
 test3()
@@ -667,4 +733,3 @@ test12()
 test13()
 test14()
 test15()
-

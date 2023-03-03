@@ -246,98 +246,15 @@ print("\n")
 
 
 def lexing_test2():
-    try:
-        s = Stream.streamFromString("var flag = true;")
-        l = lexer.lexerFromStream(s)
-        for token in l:
-            print(token)
-    except TokenError as e:
-        print(e)
-
-# for loop includes get, set, declare
+    s = Stream.streamFromString("var flag = True;")
+    l = lexer.lexerFromStream(s)
+    for token in l:
+        print(token)
 
 
-print("\n")
-
-
-def lexing_test3():
-    try:
-        s = Stream.streamFromString(
-            "for i = 1; i < 9; i = i + 1 do b = b + 5 end")
-        l = lexer.lexerFromStream(s)
-        for token in l:
-            print(token)
-    except TokenError as e:
-        print(e)
-
-
-# while loop
-
-print("\n")
-
-
-def lexing_test4():
-    try:
-        s = Stream.streamFromString("while i < 9 do b = b + 5 end")
-        l = lexer.lexerFromStream(s)
-        for token in l:
-            print(token)
-    except TokenError as e:
-        print(e)
-
-
-print("\n")
-
-
-def lexing_test5():
-    try:
-
-        s = Stream.streamFromString("print 1, 2, 3")
-        l = lexer.lexerFromStream(s)
-        for token in l:
-            print(token)
-    except TokenError as e:
-        print(e)
-
-
-print("\n")
-
-
-def lexing_test6():
-    try:
-        s = Stream.streamFromString("List 1, 2, 3;")
-        l = lexer.lexerFromStream(s)
-        for token in l:
-            print(token)
-    except TokenError as e:
-        print(e)
-
-
-print("\n")
-
-
-def lexing_test7():
-    try:
-        s = Stream.streamFromString("print \"hello world\"")
-        l = lexer.lexerFromStream(s)
-        for token in l:
-            print(token)
-    except TokenError as e:
-        print(e)
-
-
-print("\n")
-
-
-def lexing_test8():
-    try:
-        s = Stream.streamFromString("let a = 1 in a + 1 end")
-        l = lexer.lexerFromStream(s)
-        for token in l:
-            print(token)
-    except TokenError as e:
-        print(e)
-
+# lexing_test1()
+# print("\n")
+# lexing_test2()
 
 lexing_test1()
 lexing_test3()
