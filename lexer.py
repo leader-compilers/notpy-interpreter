@@ -38,11 +38,6 @@ class Num:
 
 
 @dataclass
-class Bool:
-    b: bool
-
-
-@dataclass
 class Keyword:
     word: str
 
@@ -67,10 +62,10 @@ class EndOfLine:
     EOL: str
 
 
-TokenType = Num | Bool | Keyword | Identifier | Operator | EndOfLine | String
-keywords = "var true false print if else for while return end do List".split()
-operators = ", . ; + - * % > < >= <= == ! != ** ^".split()
-word_operators = "and or not quot rem"
+TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
+keywords = "print var true false print if else then for while return end do List".split()
+operators = ", . ; + - * % > < >= <= == ! != ** ^ ( ) [ ] =".split()
+word_operators = "and or not"
 white_space = " \t\n"
 
 
@@ -128,11 +123,65 @@ class lexer:
             except EndOfTokens:
                 raise EndOfTokens()
 
+    def operator(self, c: str) -> Operator:
+        if c == "=":
+            c = self.stream.next_char()
+            if c == "=":
+                return Operator("==")
+            else:
+                self.stream.prev_char()
+                return Operator("=")
+        elif c == "!":
+            c = self.stream.next_char()
+            if c == "=":
+                return Operator("!=")
+            else:
+                self.stream.prev_char()
+                return Operator("!")
+        elif c == ">":
+            c = self.stream.next_char()
+            if c == "=":
+                return Operator(">=")
+            else:
+                self.stream.prev_char()
+                return Operator(">")
+        elif c == "<":
+            c = self.stream.next_char()
+            if c == "=":
+                return Operator("<=")
+            else:
+                self.stream.prev_char()
+                return Operator("<")
+        elif c == "&":
+            c = self.stream.next_char()
+            if c == "&":
+                return Operator("and")
+            else:
+                self.stream.prev_char()
+                return Operator("&")
+        elif c == "|":
+            c = self.stream.next_char()
+            if c == "|":
+                return Operator("or")
+            else:
+                self.stream.prev_char()
+                return Operator("|")
+        elif c == "^":
+            c = self.stream.next_char()
+            if c == "^":
+                return Operator("**")
+            else:
+                self.stream.prev_char()
+                return Operator("^")
+        else:
+            return Operator(c)
+
     def next_token(self) -> TokenType:
         try:
-            match self.stream.next_char():
+            c = self.stream.next_char()
+            match c:
                 case c if c in operators:
-                    return Operator(c)
+                    return self.operator(c)
                 case c if c.isdigit():
                     return self.number(c)
                 case c if c.isalpha():
@@ -141,24 +190,35 @@ class lexer:
                     return self.string()
                 case c if c in white_space:
                     return self.next_token()
-            # some elif statements are still to be done
+
         except EndOfTokens:
             raise EndOfTokens()
-
+    
     def peek_token(self) -> TokenType:
         if self.save is not None:
             return self.save
-        self.save = self.next_token()
-        return self.save
+        try:
+            self.save = self.next_token()
+            return self.save
+        except EndOfTokens:
+            return None
 
     def advance(self):
-        assert self.save is not None
-        self.save = None
+        if self.save is not None:
+            self.save = None
+        elif self.peek_token() is not None:
+            self.next_token()
+        else:
+            raise EndOfTokens()
 
     def match(self, expected):
         if self.peek_token() == expected:
-            return self.advance()
-        raise TokenError()
+            self.advance()
+        else:
+            raise TokenError()
+        
+        
+
 
     def __iter__(self):
         return self
@@ -169,6 +229,8 @@ class lexer:
         except EndOfTokens:
             raise StopIteration
 
+# ifelse
+
 
 def lexing_test1():
     s = Stream.streamFromString("if 22 >= 33 then 5+3 else 8*3 end;")
@@ -176,14 +238,30 @@ def lexing_test1():
     for token in l:
         print(token)
 
+# declaration
+
 
 def lexing_test2():
-    s = Stream.streamFromString("var flag = True;")
+    s = Stream.streamFromString("var flag = true;")
     l = lexer.lexerFromStream(s)
     for token in l:
         print(token)
 
+# for loop
+
+
+def lexing_test3():
+    s = Stream.streamFromString("for i = 1; i < 9; i = i + 1 do b = b + 5 end")
+    l = lexer.lexerFromStream(s)
+    for token in l:
+        print(token)
+
+# while loop
+# def lexing_test4():
+
 
 # lexing_test1()
-# print("\n")
+# lexing_test3()
 # lexing_test2()
+
+# print(lexer.lexerFromStream(Stream.streamFromString("1+2")))
