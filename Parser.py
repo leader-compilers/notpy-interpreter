@@ -115,7 +115,6 @@ class Parser:
         # print(self.tokens.peek_token())
         match self.tokens.peek_token():
             case Identifier(name):
-            
                 match self.tokens.next_token():
                     case Operator(op) if op in "=":
                         # print("hi")
@@ -205,13 +204,13 @@ class Parser:
         return while_loop(c, b)
 
     def parse_if(self):
-        self.lexer.match(Keyword("if"))
+        self.tokens.match(Keyword("if"))
         c = self.parse_expr()
-        self.lexer.match(Keyword("then"))
+        self.tokens.match(Keyword("then"))
         t = self.parse_expr()
-        self.lexer.match(Keyword("else"))
+        self.tokens.match(Keyword("else"))
         f = self.parse_expr()
-        self.lexer.match(Keyword("end"))
+        self.tokens.match(Keyword("end"))
         return if_statement(c, t, f)
 
     # for can be passed as while loop and some extra conditions
@@ -372,7 +371,7 @@ def test_parse7():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("a = 3+c+d+5;"))
+    print(parse("a = 5+c+d+e;"))
 
 
 test_parse1()
