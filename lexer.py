@@ -199,20 +199,23 @@ class lexer:
 
         except EndOfTokens:
             raise EndOfTokens()
-
-        raise TokenError(f"Unexpected token {c}", self.stream.line)
-
-    #  will be used in lexing
-
+    
     def peek_token(self) -> TokenType:
         if self.save is not None:
             return self.save
-        self.save = self.next_token()
-        return self.save
+        try:
+            self.save = self.next_token()
+            return self.save
+        except EndOfTokens:
+            return None
 
     def advance(self):
-        assert self.save is not None
-        self.save = None
+        if self.save is not None:
+            self.save = None
+        elif self.peek_token() is not None:
+            self.next_token()
+        else:
+            raise EndOfTokens()
 
     def match(self, expected):
         if self.peek_token() == expected:
@@ -339,11 +342,11 @@ def lexing_test8():
         print(e)
 
 
-lexing_test1()
-lexing_test3()
-lexing_test2()
-lexing_test4()
-lexing_test5()
-lexing_test6()
-lexing_test7()
-lexing_test8()
+# lexing_test1()
+# lexing_test3()
+# lexing_test2()
+# lexing_test4()
+# lexing_test5()
+# lexing_test6()
+# lexing_test7()
+# lexing_test8()
