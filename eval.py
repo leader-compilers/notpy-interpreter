@@ -3,12 +3,13 @@ from dataclasses import dataclass
 from fractions import Fraction
 
 
-
 @dataclass
 class Null():
     pass
 
 # Literals
+
+
 @dataclass
 class numeric_literal:
     value: Fraction
@@ -123,9 +124,11 @@ class for_loop:
 class block:
     exps: List["AST"]
 
+
 @dataclass
 class Null:
     pass
+
 
 @dataclass
 class print_statement:
@@ -199,19 +202,21 @@ class Function:
     parameters: List[identifier]
     body: 'AST'
     return_exp: 'AST'
-    
+
 
 @dataclass
 class FunctionCall:
-    function: 'AST'
+    function: identifier
     arguments: List['AST']
-    
-@dataclass #to keep track of the function name and its parameters in our environment
+
+
+@dataclass  # to keep track of the function name and its parameters in our environment
 class FunctionObject:
     parameters: List['AST']
     body: 'AST'
     return_exp: 'AST'
-    
+
+
 AST = Lists | cons | is_empty | head | tail | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | identifier | get | set | declare | Function | FunctionCall | Null
 
 Value = Fraction | bool | str
@@ -265,7 +270,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 value, lexical_scope, name_space))
             return 0
 
-        case identifier(name):  # eval_ast might never get this node as we are using get, however, it is still here for completeness
+        # eval_ast might never get this node as we are using get, however, it is still here for completeness
+        case identifier(name):
             return name_space.get_from_scope(name)
             # if name in name_space:
             #     return name_space[name]
@@ -313,6 +319,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return Fraction(eval_ast(left, lexical_scope, name_space) / eval_ast(right, lexical_scope, name_space))
         case binary_operation("^", left, right):
             return Fraction(eval_ast(left, lexical_scope, name_space) ** eval_ast(right, lexical_scope, name_space))
+        case binary_operation("%", left, right):
+            return Fraction(eval_ast(left, lexical_scope, name_space) % eval_ast(right, lexical_scope, name_space))
 
         # Boolean Operations
         case binary_operation("==", left, right):
@@ -386,9 +394,10 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return str(final_string[begin:end:step])
 
         # For loops
-        case for_loop(iterator,initial_value, condition, updation, body):
+        case for_loop(iterator, initial_value, condition, updation, body):
             name_space.start_scope()
-            eval_ast(declare(iterator, initial_value), lexical_scope, name_space)
+            eval_ast(declare(iterator, initial_value),
+                     lexical_scope, name_space)
             while eval_ast(condition, lexical_scope, name_space):
                 eval_ast(body, lexical_scope, name_space)
                 eval_ast(updation, lexical_scope, name_space)
@@ -433,13 +442,13 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 output_list.append(
                     eval_ast(our_list[i], lexical_scope, name_space))
             return output_list
-        
-        #Functions
+
+        # Functions
         case Function(identifier(name), parameters, body, return_exp):
-            name_space.add_to_scope(name, FunctionObject(parameters, body, return_exp))
+            name_space.add_to_scope(
+                name, FunctionObject(parameters, body, return_exp))
             return 0
- 
-         
+
         case FunctionCall(identifier(name), arguments):
             function = name_space.get_from_scope(name)
             argv = []
@@ -450,7 +459,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 name_space.add_to_scope(parameter.name, arg)
             for exp in function.body.exps:
                 eval_ast(exp, lexical_scope, name_space)
-            return_value= eval_ast(function.return_exp, lexical_scope, name_space)
+            return_value = eval_ast(
+                function.return_exp, lexical_scope, name_space)
             name_space.end_scope()
             return return_value
 
@@ -625,7 +635,7 @@ def test12():  # For loop
     b2 = set(last_iterator, get(iterator))
     body = block([b1, b2])
 
-    e1 = for_loop(iterator, numeric_literal(0),condition, updation, body)
+    e1 = for_loop(iterator, numeric_literal(0), condition, updation, body)
     assert eval_ast(e1, None, name_space) == 0
     assert eval_ast(get(var), None, name_space) == 5
     assert eval_ast(get(last_iterator), None, name_space) == 4
@@ -728,13 +738,14 @@ def test16():
     j = identifier("j")
     fn = identifier("fn")
     e = Function(
-         fn, [i,j], block([]), binary_operation("+", get(i), get(j)))
+        fn, [i, j], block([]), binary_operation("+", get(i), get(j)))
     eval_ast(e, None, name_space)
-    program = binary_operation ("+", FunctionCall(fn, [numeric_literal(15), numeric_literal(2)]),
-            FunctionCall(fn, [numeric_literal(12), numeric_literal(3)])
-    )
-    
-    assert eval_ast(program,None, name_space) == (15+2)+(12+3)
+    program = binary_operation("+", FunctionCall(fn, [numeric_literal(15), numeric_literal(2)]),
+                               FunctionCall(
+                                   fn, [numeric_literal(12), numeric_literal(3)])
+                               )
+
+    assert eval_ast(program, None, name_space) == (15+2)+(12+3)
 
 
 def test17():
@@ -743,13 +754,15 @@ def test17():
     j = identifier("j")
     fn = identifier("fn")
     e = Function(
-         fn, [i,j], block([declare(identifier("test"), numeric_literal(0)), set(identifier("test"), binary_operation("^", get(i), get(j)))]), get(identifier("test")))
+        fn, [i, j], block([declare(identifier("test"), numeric_literal(0)), set(identifier("test"), binary_operation("^", get(i), get(j)))]), get(identifier("test")))
     eval_ast(e, None, name_space)
-    program = binary_operation ("+", FunctionCall(fn, [numeric_literal(15), numeric_literal(2)]),
-            FunctionCall(fn, [numeric_literal(12), numeric_literal(3)])
-    )
-    
-    assert eval_ast(program,None, name_space) == (15**2)+(12**3)
+    program = binary_operation("+", FunctionCall(fn, [numeric_literal(15), numeric_literal(2)]),
+                               FunctionCall(
+                                   fn, [numeric_literal(12), numeric_literal(3)])
+                               )
+
+    assert eval_ast(program, None, name_space) == (15**2)+(12**3)
+
 
 test1()
 test2()
@@ -771,16 +784,17 @@ test17()
 
 
 def p1():
-    #sum of multiples of 3 and 5 below 100
-    i=identifier("i")
-    namespace=environment()
-    e1=declare(i,numeric_literal(1))
-    e2=declare(identifier("sum"),numeric_literal(0))
-    
-    condition=binary_operation("<",get(i),numeric_literal(100))
-    
-   
+    # sum of multiples of 3 and 5 below 100
+    i = identifier("i")
+    namespace = environment()
+    e1 = declare(i, numeric_literal(1))
+    e2 = declare(identifier("sum"), numeric_literal(0))
+
+    condition = binary_operation("<", get(i), numeric_literal(100))
+
     #b2=if_statement(binary_operation("==", binary_operation("/", get(i), numeric_literal(3))),)
-    
-    if_condition=binary_operation("||", binary_operation("==", binary_operation("%", get(i), numeric_literal(3)), numeric_literal(0)), binary_operation("==", binary_operation("%", get(i), numeric_literal(5)), numeric_literal(0)))
-    if_expression=set(identifier("sum"), binary_operation("+", get(identifier("sum")), get(i)))
+
+    if_condition = binary_operation("||", binary_operation("==", binary_operation("%", get(i), numeric_literal(
+        3)), numeric_literal(0)), binary_operation("==", binary_operation("%", get(i), numeric_literal(5)), numeric_literal(0)))
+    if_expression = set(identifier("sum"), binary_operation(
+        "+", get(identifier("sum")), get(i)))
