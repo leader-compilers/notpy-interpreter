@@ -108,11 +108,6 @@ class Parser:
     
     def parse_set(self):
         # print("hi")
-        # print(self.tokens.peek_token())
-        # print(self.tokens.next_token())
-        # print(self.tokens.peek_token())
-        # self.tokens.advance()
-        # print(self.tokens.peek_token())
         match self.tokens.peek_token():
             case Identifier(name):
                 match self.tokens.next_token():
@@ -154,9 +149,6 @@ class Parser:
                 tree = self.parse_set()
                 if tree == None:
                     tree = self.parse_logic()
-                    # print(tree)
-                    # print("i")
-                    # print(tree)
                 return tree
             
     def parse_function(self):
@@ -371,13 +363,13 @@ def test_parse7():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("a = 5+c+d+e;"))
+    print(parse("a = c+d+e;"))
 
 
-test_parse1()
-# test_parse2()
-test_parse3()
-test_parse4()
-test_parse5()
-test_parse6()
+# test_parse1()
+# # test_parse2()
+# test_parse3()
+# test_parse4()
+# test_parse5()
+# test_parse6()
 test_parse7()
