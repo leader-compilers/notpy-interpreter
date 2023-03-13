@@ -71,7 +71,7 @@ class EndOfLine:
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
 keywords = "print var true false if else then for while return end do List let in".split()
-operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not".split(
+operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not ;;".split(
 )
 white_space = " \t\n"
 
