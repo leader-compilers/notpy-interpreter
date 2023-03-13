@@ -3,6 +3,11 @@ from dataclasses import dataclass
 from fractions import Fraction
 
 
+
+@dataclass
+class Null():
+    pass
+
 # Literals
 @dataclass
 class numeric_literal:
@@ -107,7 +112,8 @@ class while_loop:
 
 @dataclass
 class for_loop:
-    iterator: identifier(None)
+    iterator: identifier
+    initial_value: "AST"
     condition: "AST"
     updation: "AST"
     body: "AST"
@@ -202,11 +208,11 @@ class FunctionCall:
     
 @dataclass #to keep track of the function name and its parameters in our environment
 class FunctionObject:
-     parameters: List['AST']
-     body: 'AST'
-     return_exp: 'AST'
+    parameters: List['AST']
+    body: 'AST'
+    return_exp: 'AST'
     
-AST = Lists | cons | is_empty | head | tail | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | identifier | get | set | declare | Function | FunctionCall | FunctionObject| Null
+AST = Lists | cons | is_empty | head | tail | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | identifier | get | set | declare | Function | FunctionCall | Null
 
 Value = Fraction | bool | str
 
@@ -380,10 +386,13 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return str(final_string[begin:end:step])
 
         # For loops
-        case for_loop(iterator, condition, updation, body):
+        case for_loop(iterator,initial_value, condition, updation, body):
+            name_space.start_scope()
+            eval_ast(declare(iterator, initial_value), lexical_scope, name_space)
             while eval_ast(condition, lexical_scope, name_space):
                 eval_ast(body, lexical_scope, name_space)
                 eval_ast(updation, lexical_scope, name_space)
+            name_space.end_scope()
             return Fraction(0)
 
         # Print statements
@@ -604,7 +613,7 @@ def test12():  # For loop
     var = identifier("var")
     last_iterator = identifier("last_iterator")
 
-    eval_ast(declare(iterator, numeric_literal(0)), None, name_space)
+    #eval_ast(declare(iterator, numeric_literal(0)), None, name_space)
     eval_ast(declare(var, numeric_literal(0)), None, name_space)
     eval_ast(declare(last_iterator, numeric_literal(0)), None, name_space)
 
@@ -616,7 +625,7 @@ def test12():  # For loop
     b2 = set(last_iterator, get(iterator))
     body = block([b1, b2])
 
-    e1 = for_loop(iterator, condition, updation, body)
+    e1 = for_loop(iterator, numeric_literal(0),condition, updation, body)
     assert eval_ast(e1, None, name_space) == 0
     assert eval_ast(get(var), None, name_space) == 5
     assert eval_ast(get(last_iterator), None, name_space) == 4
@@ -759,3 +768,19 @@ test14()
 test15()
 test16()
 test17()
+
+
+def p1():
+    #sum of multiples of 3 and 5 below 100
+    i=identifier("i")
+    namespace=environment()
+    e1=declare(i,numeric_literal(1))
+    e2=declare(identifier("sum"),numeric_literal(0))
+    
+    condition=binary_operation("<",get(i),numeric_literal(100))
+    
+   
+    #b2=if_statement(binary_operation("==", binary_operation("/", get(i), numeric_literal(3))),)
+    
+    if_condition=binary_operation("||", binary_operation("==", binary_operation("%", get(i), numeric_literal(3)), numeric_literal(0)), binary_operation("==", binary_operation("%", get(i), numeric_literal(5)), numeric_literal(0)))
+    if_expression=set(identifier("sum"), binary_operation("+", get(identifier("sum")), get(i)))
