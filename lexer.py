@@ -70,8 +70,9 @@ class EndOfLine:
 
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
-keywords = "print var true false print if else then for while return end do List let in".split()
-operators = ", . ; + - * % > < >= <= == ! != ** ^ ( ) [ ] = and or not".split()
+keywords = "print var true false if else then for while return end do List let in".split()
+operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not".split(
+)
 white_space = " \t\n"
 
 
@@ -199,23 +200,20 @@ class lexer:
 
         except EndOfTokens:
             raise EndOfTokens()
-    
+
+        raise TokenError(f"Unexpected token {c}", self.stream.line)
+
+    #  will be used in lexing
+
     def peek_token(self) -> TokenType:
         if self.save is not None:
             return self.save
-        try:
-            self.save = self.next_token()
-            return self.save
-        except EndOfTokens:
-            return None
+        self.save = self.next_token()
+        return self.save
 
     def advance(self):
-        if self.save is not None:
-            self.save = None
-        elif self.peek_token() is not None:
-            self.next_token()
-        else:
-            raise EndOfTokens()
+        assert self.save is not None
+        self.save = None
 
     def match(self, expected):
         if self.peek_token() == expected:
@@ -255,15 +253,93 @@ def lexing_test2():
         print(token)
 
 
-# lexing_test1()
-# print("\n")
-# lexing_test2()
+print("\n")
 
-# lexing_test1()
-# lexing_test3()
-# lexing_test2()
-# lexing_test4()
-# lexing_test5()
-# lexing_test6()
-# lexing_test7()
-# lexing_test8()
+
+def lexing_test3():
+    try:
+        s = Stream.streamFromString(
+            "for i = 1; i < 9; i = (i + 1) do b = (b + 5) end")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+# while loop
+
+print("\n")
+
+
+def lexing_test4():
+    try:
+        s = Stream.streamFromString("while i < 9 do b = b + 5 end")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+print("\n")
+
+
+def lexing_test5():
+    try:
+
+        s = Stream.streamFromString("print 1, 2, 3")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+print("\n")
+
+
+def lexing_test6():
+    try:
+        s = Stream.streamFromString("List 1, 2, 3;")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+print("\n")
+
+
+def lexing_test7():
+    try:
+        s = Stream.streamFromString("print \"hello world\"")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+print("\n")
+
+
+def lexing_test8():
+    try:
+        s = Stream.streamFromString("let a = 1 in a + 1 end")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+lexing_test1()
+lexing_test3()
+lexing_test2()
+lexing_test4()
+lexing_test5()
+lexing_test6()
+lexing_test7()
+lexing_test8()
