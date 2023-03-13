@@ -247,10 +247,15 @@ print("\n")
 
 
 def lexing_test2():
-    s = Stream.streamFromString("var flag = True;")
-    l = lexer.lexerFromStream(s)
-    for token in l:
-        print(token)
+    try:
+        s = Stream.streamFromString("var flag = true;")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+# for loop includes get, set, declare
 
 
 print("\n")
