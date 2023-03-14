@@ -99,8 +99,8 @@ class functionName:
     name: str
 
 
-TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
-keywords = "print var true false if else then for while return end do List let in".split()
+TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName
+keywords = "def print var true false if else then for while return end do List let in".split()
 operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not ;; { }".split(
 )
 white_space = " \t\n"
@@ -136,6 +136,10 @@ class lexer:
                 c = self.stream.next_char()
                 if c.isalpha():
                     word = word + c
+                elif c == "(":
+                    self.stream.prev_char()
+                    return functionName(word)
+
                 else:
                     self.stream.prev_char()
                     if word in keywords:
@@ -367,6 +371,27 @@ def lexing_test7():
 def lexing_test8():
     try:
         s = Stream.streamFromString("let a = 1 in a + 1 end")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+def lexing_test9():
+    try:
+        s = Stream.streamFromString("def dhairya(a, b){ return a + b; }")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+def lexing_test10():
+    try:
+        s = Stream.streamFromString(
+            "while i < 9 do b = dhairya(1,b) + 5; i = i + 1 end;")
         l = lexer.lexerFromStream(s)
         for token in l:
             print(token)
