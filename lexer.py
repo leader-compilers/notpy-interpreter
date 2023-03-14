@@ -376,3 +376,13 @@ def lexing_test8():
             print(token)
     except TokenError as e:
         print(e)
+
+
+lexing_test1()
+lexing_test3()
+lexing_test2()
+lexing_test4()
+lexing_test5()
+lexing_test6()
+lexing_test7()
+lexing_test8()
