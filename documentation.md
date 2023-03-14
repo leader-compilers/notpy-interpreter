@@ -20,7 +20,7 @@ For defining the Context Free Grammar of our language we recognize the following
 |:---|:---|
 |^   |    power|
 |-, !|    unary|
-|/, *  |  mult|
+|/, * , % |  mult|
 |+, -   | add|
 |>, <, >=, <= | comp|
 |==, !=  | equality|

@@ -335,6 +335,11 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return bool(eval_ast(left, lexical_scope, name_space) and eval_ast(right, lexical_scope, name_space))
         case binary_operation("||", left, right):
             return bool(eval_ast(left, lexical_scope, name_space) or eval_ast(right, lexical_scope, name_space))
+        case binary_operation("or", left, right):
+            return bool(eval_ast(left, lexical_scope, name_space) or eval_ast(right, lexical_scope, name_space))
+        case binary_operation("and", left, right):
+            return bool(eval_ast(left, lexical_scope, name_space) and eval_ast(right, lexical_scope, name_space))
+
 
         # Binary List operations
         case binary_operation(".", left, right):

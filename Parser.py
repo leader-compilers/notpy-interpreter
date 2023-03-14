@@ -32,7 +32,7 @@ class Parser:
     def parse_power(self):
         left = self.parse_primary()
         while True:
-        
+
             match self.tokens.peek_token():
                 case Operator(op) if op in "^":
                     self.tokens.advance()
@@ -40,7 +40,7 @@ class Parser:
                     left = binary_operation(op, left, m)
                 case _:
                     break
-                
+
         return left
 
     def parse_unary(self):
@@ -58,9 +58,9 @@ class Parser:
     def parse_mult(self):
         left = self.parse_unary()
         while True:
-            
+
             match self.tokens.peek_token():
-                case Operator(op) if op in "*/":
+                case Operator(op) if op in "*/%":
                     self.tokens.advance()
                     m = self.parse_mult()
                     left = binary_operation(op, left, m)
@@ -71,9 +71,9 @@ class Parser:
     def parse_add(self):
         left = self.parse_mult()
         while True:
-            
+
             match self.tokens.peek_token():
-                
+
                 case Operator(op) if op in "+-":
                     self.tokens.advance()
                     m = self.parse_add()
@@ -103,64 +103,117 @@ class Parser:
     def parse_logic(self):
         left = self.parse_equal()
         match self.tokens.peek_token():
-            case Operator(op) if op in "and or":
+            case Operator(op) if op == "and" or op == "or":
                 self.tokens.advance()
                 right = self.parse_equal()
                 return binary_operation(op, left, right)
         return left
-    
+
     def parse_set(self):
         # print("hi")
         match self.tokens.peek_token():
             case Identifier(name):
                 match self.tokens.next_token():
                     case Operator(op) if op in "=":
-                        
+
                         # print("hi")
                         self.tokens.advance()
-                        
+
                         while True:
                             value = self.parse_logic()
-                            
+
                             match self.tokens.peek_token():
                                 case Operator(op) if op in ";":
                                     break
                         if not value:
                             return None
-                        
+
                         return set(identifier(name), value)
-                    
+
                     case _:
                         return None
             case _:
                 return None
 
     def parse_expr(self):
+        b = []
         match self.tokens.peek_token():
-            case Keyword("let"):
-                return self.parse_let()
-            case Keyword("def"):
-                return self.parse_function()
-            case Keyword("for"):
-                return self.parse_for()
-            case Keyword("if"):
-                return self.parse_if()
-            case Keyword("while"):
-                return self.parse_while()
-            case Keyword("print"):
-                return self.parse_print()
-            case Keyword("List"):
-                return self.parse_List()
-            case Keyword("var"):
-                return self.parse_declare()
-            # case functionName(name):
-            #     return self.parse_function_call()
-            case _:
-                tree = self.parse_set()
-                if tree == None:
-                    tree = self.parse_logic()
-                return tree
-            
+            case Operator(op) if op in "{":
+                self.tokens.advance()
+        while True:
+            match self.tokens.peek_token():
+                case Operator(op) if op in "}":
+                    break
+                case EndOfLine(EOL) if EOL in "EOL":
+                    break
+                case Keyword("let"):
+                    b.append(self.parse_let())
+                    # return self.parse_let()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("for"):
+                    b.append(self.parse_for())
+                    # return self.parse_for()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("if"):
+                    b.append(self.parse_if())
+                    # return self.parse_if()
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("def"):
+                    # return self.parse_function()
+                    b.append(self.parse_function())
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("while"):
+                    b.append(self.parse_while())
+                    # return self.parse_while()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("print"):
+                    b.append(self.parse_print())
+                    # return  self.parse_print()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("List"):
+                    b.append(self.parse_List())
+                    # return self.parse_List()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("var"):
+                    b.append(self.parse_declare())
+                    # return self.parse_declare()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                # case functionName(name):
+                #     return self.parse_function_call()
+                case _:
+                    tree = self.parse_set()
+                    if tree == None:
+                        tree = self.parse_logic()
+                        # print(tree)
+                        # print("i")
+                        # print(tree)
+                    # return block(b)
+                    return tree
+        return block(b)
+
     def parse_function_call(self):
         match self.tokens.peek_token():
             case functionName(name):
@@ -170,7 +223,7 @@ class Parser:
                         self.tokens.advance()
                         parameters = []
                         while self.tokens.peek_token() is not None:
-                            
+
                             if isinstance(self.tokens.peek_token(), Identifier):
                                 parameters.append(self.tokens.peek_token())
                                 self.tokens.advance()
@@ -187,10 +240,9 @@ class Parser:
                                 break
                             else:
                                 raise SyntaxError("Unexpected token")
-                        
-                            
+
                         return FunctionCall(identifier(name), parameters)
-                    
+
                     case _:
                         raise SyntaxError("Unexpected token")
 
@@ -208,7 +260,8 @@ class Parser:
                                 while self.tokens.peek_token() is not None:
 
                                     if isinstance(self.tokens.peek_token(), Identifier):
-                                        parameters.append(self.tokens.peek_token())
+                                        parameters.append(
+                                            self.tokens.peek_token())
                                         self.tokens.advance()
                                         if isinstance(self.tokens.peek_token(), Operator) and self.tokens.peek_token().op == ")":
                                             self.tokens.advance()
@@ -221,13 +274,14 @@ class Parser:
                                             self.tokens.advance()
                                             continue
                                         else:
-                                            raise SyntaxError("Unexpected token")
+                                            raise SyntaxError(
+                                                "Unexpected token")
                                     elif isinstance(self.tokens.peek_token(), Operator) and self.tokens.peek_token().op == "{":
                                         self.tokens.advance()
                                         break
                                     else:
                                         raise SyntaxError("Unexpected token")
-                                
+
                                 exprs = []
 
                                 while True:
@@ -237,36 +291,67 @@ class Parser:
                                             self.tokens.advance()
                                             ret_expr = self.parse_logic()
                                             break
-                                    
+
                                     self.tokens.match(Operator(";"))
-                                
+
                                 body = block(exprs)
 
                                 return Function(identifier(name), parameters, body, ret_expr)
-                            
+
                             case _:
                                 raise SyntaxError("Unexpected token")
                     case _:
                         raise SyntaxError("Unexpected token")
             case _:
                 return None
-            
-    
+
     def parse_while(self):
         self.tokens.match(Keyword("while"))
-        c = self.parse_expr()
+        c = self.parse_logic()
         self.tokens.match(Keyword("do"))
-        b = self.parse_expr()
+        # b = self.parse_expr()
+        exprs = []
+        while True:
+            # if self.tokens.peek_token().matches(")"):
+            #     break
+            match self.tokens.peek_token():
+                case Operator("}"):
+                    self.tokens.advance()
+                    break
+            exprs.append(self.parse_expr())
+            self.tokens.match(Operator(";"))
+        b = block(exprs)
         self.tokens.match(Keyword("end"))
+        self.tokens.match(Operator(";"))
         return while_loop(c, b)
-    
+
     def parse_if(self):
         self.tokens.match(Keyword("if"))
-        c = self.parse_expr()
+        c = self.parse_logic()
         self.tokens.match(Keyword("then"))
-        t = self.parse_expr()
+        exprs = []
+        while True:
+            # if self.tokens.peek_token().matches(")"):
+            #     break
+            match self.tokens.peek_token():
+                case Operator("}"):
+                    self.tokens.advance()
+                    break
+            exprs.append(self.parse_expr())
+            self.tokens.match(Operator(";"))
+        t = block(exprs)
         self.tokens.match(Keyword("else"))
-        f = self.parse_expr()
+        exprs = []
+        while True:
+            # if self.tokens.peek_token().matches(")"):
+            #     break
+            match self.tokens.peek_token():
+                case Operator("}"):
+                    self.tokens.advance()
+                    break
+            exprs.append(self.parse_expr())
+            self.tokens.match(Operator(";"))
+        f = block(exprs)
         self.tokens.match(Keyword("end"))
         self.tokens.match(Operator(";"))
         return if_statement(c, t, f)
@@ -274,17 +359,34 @@ class Parser:
     # for can be passed as while loop and some extra conditions
     def parse_for(self):
         self.tokens.match(Keyword("for"))
-        iterator = self.parse_expr()
+        self.tokens.match(Operator("("))
+        iterator = self.tokens.peek_token()
+        self.tokens.advance()
+        self.tokens.match(Operator("="))
+        initial_value = self.parse_expr()
         self.tokens.match(Operator(";"))
-        condition = self.parse_expr()
+        condition = self.parse_logic()
         self.tokens.match(Operator(";"))
         increment = self.parse_expr()
+        self.tokens.match(Operator(";"))
+        self.tokens.match(Operator(")"))
         self.tokens.match(Keyword("do"))
-        body = self.parse_expr()
+        # body = self.parse_expr()
+        exprs = []
+        while True:
+            # if self.tokens.peek_token().matches(")"):
+            #     break
+            match self.tokens.peek_token():
+                case Operator(op) if op in "}":
+                    self.tokens.advance()
+                    break
+            exprs.append(self.parse_expr())
+            self.tokens.match(Operator(";"))
+        body = block(exprs)
         self.tokens.match(Keyword("end"))
         self.tokens.match(Operator(";"))
-        return for_loop(iterator, condition, increment, body)
-    
+        return for_loop(identifier(iterator), initial_value, condition, increment, body)
+
     def parse_print(self):
         self.tokens.match(Keyword("print"))
         # if self.tokens.peek_token().matches("("):
@@ -298,9 +400,9 @@ class Parser:
                 case Operator(op) if op in ";":
                     break
             self.tokens.match(Operator(","))
-        
+        self.tokens.match(Operator(";"))
         return print_statement(exprs)
-    
+
     def parse_List(self):
         self.tokens.match(Keyword("List"))
         values = []
@@ -311,7 +413,7 @@ class Parser:
                     break
             self.tokens.match(Operator(","))
         return Lists(values)
-        
+
     def parse_let(self):
         self.tokens.match(Keyword("let"))
         name = self.tokens.peek_token()
@@ -320,6 +422,7 @@ class Parser:
         value = self.parse_expr()
         self.tokens.match(Keyword("in"))
         body = self.parse_expr()
+        self.tokens.match(Operator(";"))
         return let(name, value, body)
 
     def parse_declare(self) -> Optional[declare]:
@@ -333,36 +436,14 @@ class Parser:
         while True:
             # match self.tokens.peek_token():
             #     case Identifier(name):
-            value = self.parse_expr()
+            value = self.parse_logic()
             match self.tokens.peek_token():
                 case Operator(op) if op in ";":
                     break
         if not value:
             return None
-
+        self.tokens.match(Operator(";"))
         return declare(identifier(vari), value)
-    
-    
-
-@dataclass
-class NumType:
-    pass
-
-
-@dataclass
-class BoolType:
-    pass
-
-
-SimType = NumType | BoolType
-
-AST = numeric_literal | bool_literal | string_literal | binary_operation | let_var | unary_operation | while_loop | if_statement 
-
-TypedAST = NewType('TypedAST', AST)
-
-
-class TypeError(Exception):
-    pass
 
 
 def test_parse():
@@ -373,10 +454,11 @@ def test_parse():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("for 1 ; 2 ; 3 do 4 end"))
-
+    # print("var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if 1 then {2;3;} else {3;} end;;} end;")
+    print(parse("{var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if i%3 == 0 or i%5==0 then {total = total + i;} else {total = total;} end;;} end;}"))
 
 # test_parse()  # Uncomment to see the created ASTs.
+
 
 def test_parse1():
     def parse(string):
@@ -384,9 +466,9 @@ def test_parse1():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    
-    eval_ast(parse("print 1, 2, 3;"), None, None)
-    
+    print(parse("{print 1, 2, 3;}"))
+    eval_ast(parse("{print 1, 2, 3;}"), None, None)
+
 
 def test_parse2():
     def parse(string):
@@ -396,7 +478,8 @@ def test_parse2():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("let a = 1 in a + 2"))
+    print(parse("{let a = 1 in a = a + 2;}"))
+
 
 def test_parse3():
     def parse(string):
@@ -404,28 +487,34 @@ def test_parse3():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("1 == 2;"))
+    print(parse("{ 1or2 }"))
+    print(eval_ast(parse("{1+2}"), None, None))
+
 
 def test_parse4():
     def parse(string):
-        return Parser.parse_expr (
-            Parser.call_parser(lexer.lexerFromStream(Stream.streamFromString(string)))
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
         )
-    
+
     # print(parse("a+b"))
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(eval_ast(parse("6+7+8;")))
-    
+    print(eval_ast(parse("{6+7+8;}")))
+
+
 def test_parse5():
     def parse(string):
         return Parser.parse_expr(
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    
+
     # print(parse("var a = 2;"))
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(eval_ast(parse("var a = 2+3;"),None, None))
+    # print(eval_ast(parse("var a = 2+3;;"),None, None))
+    print(parse("{var a = 2+3;}"))
+
 
 def test_parse6():
     def parse(string):
@@ -433,7 +522,8 @@ def test_parse6():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("a = 4+2;"))
+    print(parse("{if 1 then {2;3;} else {3;} end;}"))
+
 
 def test_parse7():
     def parse(string):
@@ -441,7 +531,7 @@ def test_parse7():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("a = w+c+d+e;"))
+    print(parse("{a = w+c+d+e;}"))
 
 
 def test_parse8():
@@ -453,6 +543,7 @@ def test_parse8():
     print(eval_ast(parse("def fun(a, b){ a=c+d+e; i = 2; return a+b; }")))
     print(parse("def fun(a, b){ a=c+d+e; i = 2; return a+b; }"))
 
+
 def test_parse9():
     def parse(string):
         return Parser.parse_expr(
@@ -461,14 +552,24 @@ def test_parse9():
         )
     print(parse("fun(a, b, c);"))
 
+
+def test_parse10():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("{while i<30 do {i=i+1;a=a+1;} end;}"))
+
+
+# test_parse()
 # test_parse1()
 # test_parse2()
-test_parse3()
+# test_parse3()
 # test_parse4()
 # test_parse5()
 # test_parse6()
 # test_parse7()
 # test_parse8()
 # test_parse9()
-
-
+# test_parse10()
