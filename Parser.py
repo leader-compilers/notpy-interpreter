@@ -150,34 +150,57 @@ class Parser:
                     b.append(self.parse_let())
                     # return self.parse_let()
                     # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("for"):
                     b.append(self.parse_for())
                     # return self.parse_for()
                     # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("if"):
                     b.append(self.parse_if())
                     # return self.parse_if()
-                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("def"):
                 # return self.parse_function()
                     b.append(self.parse_function())
                     # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("while"):
                     b.append(self.parse_while())
                     # return self.parse_while()
                     # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("print"):
                     b.append(self.parse_print())
                     # return  self.parse_print()
                     # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("List"):
                     b.append(self.parse_List())
                     # return self.parse_List()
                     # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("var"):
                     b.append(self.parse_declare())
                     # return self.parse_declare()
                     # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 # case functionName(name):
                 #     return self.parse_function_call()
                 case _:
@@ -453,8 +476,8 @@ def test_parse():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("{var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if i%3==0 or i%5==0 then {total=total+i;} else {total=total;} end;;} end;}"))
-
+    # print("var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if 1 then {2;3;} else {3;} end;;} end;")
+    print(parse("{var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if i%3 == 0 or i%5==0 then {total = total + i;} else {total = total;} end;;} end;}"))
 
 # test_parse()  # Uncomment to see the created ASTs.
 
@@ -551,7 +574,7 @@ def test_parse10():
         )
     print(parse("{while i<30 do {i=i+1;a=a+1;} end;}"))
 
-# test_parse()
+test_parse()
 # test_parse1()
 # test_parse2()
 # test_parse3()
