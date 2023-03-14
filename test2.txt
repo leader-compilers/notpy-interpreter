@@ -1,1 +1,0 @@
-num = 600851475143; factor = 2; while factor * factor <= num do if num % factor == 0 then num = num / factor; factor = 2; else factor += 1; print num;
