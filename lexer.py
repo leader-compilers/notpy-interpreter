@@ -7,9 +7,10 @@ class EndOfTokens(Exception):
 
 
 class TokenError(Exception):
-    def __init__(self, message, line):
-        super().__init__(f"{message} at line {line}")
-        self.line = line
+    # def __init__(self, message, line):
+    #     super().__init__(f"{message} at line {line}")
+    #     self.line = line
+    pass
 
 
 @dataclass
@@ -201,7 +202,7 @@ class lexer:
         except EndOfTokens:
             raise EndOfTokens()
 
-        raise TokenError(f"Unexpected token {c}", self.stream.line)
+        raise TokenError()
 
     #  will be used in lexing
 

@@ -181,8 +181,6 @@ class Parser:
                         # print("i")
                         # print(tree)
                     # return block(b)
-                    b.append(tree)
-                    return block(b)
                     return tree
         return block(b)
             
@@ -298,7 +296,7 @@ class Parser:
     
     def parse_if(self):
         self.tokens.match(Keyword("if"))
-        c = self.parse_expr()
+        c = self.parse_logic()
         self.tokens.match(Keyword("then"))
         exprs = []
         while True:
@@ -334,9 +332,10 @@ class Parser:
         self.tokens.match(Operator("="))
         initial_value = self.parse_expr()
         self.tokens.match(Operator(";"))
-        condition = self.parse_expr()
+        condition = self.parse_logic()
         self.tokens.match(Operator(";"))
         increment = self.parse_expr()
+        self.tokens.match(Operator(";"))
         self.tokens.match(Operator(")"))
         self.tokens.match(Keyword("do"))
         # body = self.parse_expr()
@@ -409,7 +408,7 @@ class Parser:
                     break
         if not value:
             return None
-
+        self.tokens.match(Operator(";"))
         return declare(identifier(vari), value)
     
     
@@ -443,7 +442,7 @@ def test_parse():
         )
 
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
-    print(parse("for( i = 1 ; 2 ; 3 ) do 4 end; let a = 1 in a = a + 1; a=a+1 ;;"))
+    print(parse("var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do if i < 3 then total = total + i;; else total = total;; end;; end;;"))
 
 
 # test_parse()  # Uncomment to see the created ASTs.
@@ -505,7 +504,7 @@ def test_parse6():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("a = 4+2;"))
+    print(parse("if 1 then 2 else 3 end;;"))
 
 def test_parse7():
     def parse(string):
