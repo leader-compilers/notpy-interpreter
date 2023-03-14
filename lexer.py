@@ -4,6 +4,8 @@ from typing import Union
 
 class EndOfTokens(Exception):
     pass
+
+
 class EndOfStream(Exception):
     pass
 
@@ -16,7 +18,6 @@ class TokenError(Exception):
 
     def __str__(self):
         return f"{self.message} at line {self.line}, column {self.column}"
-
 
 
 @dataclass
@@ -92,9 +93,11 @@ class Operator:
 class EndOfLine:
     EOL: str
 
+
 @dataclass
 class functionName:
     name: str
+
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
 keywords = "print var true false if else then for while return end do List let in".split()
@@ -234,7 +237,6 @@ class lexer:
 
         raise TokenError("Invalid token", self.stream.line, self.stream.column)
 
-
     #  will be used in lexing
 
     def peek_token(self) -> TokenType:
@@ -275,7 +277,7 @@ def lexing_test1():
 
 
 # declaration
-print("\n")
+# print("\n")
 
 
 def lexing_test2():
@@ -290,7 +292,7 @@ def lexing_test2():
 # for loop includes get, set, declare
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test3():
@@ -306,7 +308,7 @@ def lexing_test3():
 
 # while loop
 
-print("\n")
+# print("\n")
 
 
 def lexing_test4():
@@ -319,7 +321,7 @@ def lexing_test4():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test5():
@@ -333,7 +335,7 @@ def lexing_test5():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test6():
@@ -346,7 +348,7 @@ def lexing_test6():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test7():
@@ -359,7 +361,7 @@ def lexing_test7():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test8():
@@ -370,5 +372,3 @@ def lexing_test8():
             print(token)
     except TokenError as e:
         print(e)
-
-
