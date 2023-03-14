@@ -4,37 +4,61 @@ from typing import Union
 
 class EndOfTokens(Exception):
     pass
+class EndOfStream(Exception):
+    pass
 
 
 class TokenError(Exception):
-    def __init__(self, message, line):
-        super().__init__(f"{message} at line {line}")
+    def __init__(self, message, line, column):
+        self.message = message
         self.line = line
+        self.column = column
+
+    def __str__(self):
+        return f"{self.message} at line {self.line}, column {self.column}"
+
 
 
 @dataclass
 class Stream:
     source: str
     pos: int = 0
+    line: int = 1
+    column: int = 1
 
-    def streamFromString(s):
-        return Stream(s, 0)
+    @classmethod
+    def streamFromString(cls, s):
+        return cls(s, 0, 1, 1)
 
-    def next_char(self):
+    def next_char(self) -> str:
         if self.pos >= len(self.source):
             raise EndOfTokens()
-        c = self.source[self.pos]
 
-        self.pos = self.pos + 1
-        if c == "\n":  # update line number
+        c = self.source[self.pos]
+        if c == "\n":
             self.line += 1
-        return self.source[self.pos - 1]
+            self.column = 1
+        else:
+            self.column += 1
+
+        self.pos += 1
+        return c
 
     def prev_char(self):
         assert self.pos > 0
-        self.pos = self.pos - 1
-        if self.source[self.pos] == "\n":  # update line number
+        self.pos -= 1
+        c = self.source[self.pos]
+        if c == "\n":
             self.line -= 1
+            # Find the previous non-empty line and set the column accordingly
+            for i in range(self.pos - 1, -1, -1):
+                if self.source[i] == "\n":
+                    break
+                if not self.source[i].isspace():
+                    self.column = self.pos - i
+                    break
+        else:
+            self.column -= 1
 
 # The different types of tokens
 
@@ -68,10 +92,13 @@ class Operator:
 class EndOfLine:
     EOL: str
 
+@dataclass
+class functionName:
+    name: str
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
 keywords = "print var true false if else then for while return end do List let in".split()
-operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not ;;".split(
+operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not ;; { }".split(
 )
 white_space = " \t\n"
 
@@ -110,11 +137,15 @@ class lexer:
                     self.stream.prev_char()
                     if word in keywords:
                         return Keyword(word)
+                    elif word in operators:
+                        return Operator(word)
                     else:
                         return Identifier(word)
             except EndOfTokens:
                 if word in keywords:
                     return Keyword(word)
+                elif word in operators:
+                    return Operator(word)
                 else:
                     return Identifier(word)
 
@@ -199,9 +230,10 @@ class lexer:
                     return self.next_token()
 
         except EndOfTokens:
-            raise EndOfTokens()
+            return EndOfLine("EOL")
 
-        raise TokenError(f"Unexpected token {c}", self.stream.line)
+        raise TokenError("Invalid token", self.stream.line, self.stream.column)
+
 
     #  will be used in lexing
 
@@ -340,11 +372,3 @@ def lexing_test8():
         print(e)
 
 
-lexing_test1()
-lexing_test3()
-lexing_test2()
-lexing_test4()
-lexing_test5()
-lexing_test6()
-lexing_test7()
-lexing_test8()
