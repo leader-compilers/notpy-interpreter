@@ -110,11 +110,15 @@ class lexer:
                     self.stream.prev_char()
                     if word in keywords:
                         return Keyword(word)
+                    elif word in operators:
+                        return Operator(word)
                     else:
                         return Identifier(word)
             except EndOfTokens:
                 if word in keywords:
                     return Keyword(word)
+                elif word in operators:
+                    return Operator(word)
                 else:
                     return Identifier(word)
 
@@ -159,20 +163,20 @@ class lexer:
             else:
                 self.stream.prev_char()
                 return Operator("<")
-        elif c == "&":
-            c = self.stream.next_char()
-            if c == "&":
-                return Operator("and")
-            else:
-                self.stream.prev_char()
-                return Operator("&")
-        elif c == "|":
-            c = self.stream.next_char()
-            if c == "|":
-                return Operator("or")
-            else:
-                self.stream.prev_char()
-                return Operator("|")
+        # elif c == "&":
+        #     c = self.stream.next_char()
+        #     if c == "&":
+        #         return Operator("and")
+        #     else:
+        #         self.stream.prev_char()
+        #         return Operator("&")
+        # elif c == "|":
+        #     c = self.stream.next_char()
+        #     if c == "|":
+        #         return Operator("or")
+        #     else:
+        #         self.stream.prev_char()
+        #         return Operator("|")
         elif c == "^":
             c = self.stream.next_char()
             if c == "^":
@@ -340,11 +344,22 @@ def lexing_test8():
         print(e)
 
 
-lexing_test1()
-lexing_test3()
-lexing_test2()
-lexing_test4()
-lexing_test5()
-lexing_test6()
-lexing_test7()
-lexing_test8()
+# lexing_test1()
+# lexing_test3()
+# lexing_test2()
+# lexing_test4()
+# lexing_test5()
+# lexing_test6()
+# lexing_test7()
+# lexing_test8()
+
+def lex4():
+    try:
+        s = Stream.streamFromString("1 and 2")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+lex4()

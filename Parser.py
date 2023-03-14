@@ -14,7 +14,7 @@ class Parser:
         return Parser(tokens)
 
     def parse_primary(self):
-
+        print(self.tokens.peek_token())
         match self.tokens.peek_token():
             case Identifier(name):
                 self.tokens.advance()
@@ -103,7 +103,7 @@ class Parser:
     def parse_logic(self):
         left = self.parse_equal()
         match self.tokens.peek_token():
-            case Operator(op) if op == "&&" or op == "||":
+            case Operator(op) if op in "and or":
                 self.tokens.advance()
                 right = self.parse_equal()
                 return binary_operation(op, left, right)
@@ -153,8 +153,8 @@ class Parser:
                 return self.parse_List()
             case Keyword("var"):
                 return self.parse_declare()
-            case functionName(name):
-                return self.parse_function_call()
+            # case functionName(name):
+            #     return self.parse_function_call()
             case _:
                 tree = self.parse_set()
                 if tree == None:
@@ -404,7 +404,7 @@ def test_parse3():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("1+2;"))
+    print(parse("1 == 2;"))
 
 def test_parse4():
     def parse(string):
@@ -461,14 +461,14 @@ def test_parse9():
         )
     print(parse("fun(a, b, c);"))
 
-test_parse1()
-test_parse2()
+# test_parse1()
+# test_parse2()
 test_parse3()
-test_parse4()
-test_parse5()
-test_parse6()
-test_parse7()
-test_parse8()
-test_parse9()
+# test_parse4()
+# test_parse5()
+# test_parse6()
+# test_parse7()
+# test_parse8()
+# test_parse9()
 
 
