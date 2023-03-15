@@ -321,7 +321,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return Fraction(eval_ast(left, lexical_scope, name_space) ** eval_ast(right, lexical_scope, name_space))
         case binary_operation("%", left, right):
             return Fraction(eval_ast(left, lexical_scope, name_space) % eval_ast(right, lexical_scope, name_space))
-
+        case binary_operation("//", left, right):
+            return Fraction(eval_ast(left, lexical_scope, name_space) // eval_ast(right, lexical_scope, name_space))
         # Boolean Operations
         case binary_operation("==", left, right):
             return bool(eval_ast(left, lexical_scope, name_space) == eval_ast(right, lexical_scope, name_space))

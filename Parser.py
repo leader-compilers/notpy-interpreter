@@ -60,7 +60,7 @@ class Parser:
         while True:
             
             match self.tokens.peek_token():
-                case Operator(op) if op in "*/%":
+                case Operator(op) if op == "*" or op =="//" or op == "/" or op == "%":
                     self.tokens.advance()
                     m = self.parse_mult()
                     left = binary_operation(op, left, m)
@@ -211,6 +211,7 @@ class Parser:
                         # print("i")
                         # print(tree)
                     # return block(b)
+                    b.append(tree)
                     return tree
         return block(b)
             
@@ -360,11 +361,13 @@ class Parser:
     def parse_for(self):
         self.tokens.match(Keyword("for"))
         self.tokens.match(Operator("("))
-        iterator = self.tokens.peek_token()
+        iterator = self.tokens.peek_token().word
         self.tokens.advance()
         self.tokens.match(Operator("="))
         initial_value = self.parse_expr()
-        self.tokens.match(Operator(";"))
+        match self.tokens.peek_token():
+            case Operator(op) if op in ";":
+                self.tokens.advance()
         condition = self.parse_logic()
         self.tokens.match(Operator(";"))
         increment = self.parse_expr()
@@ -507,7 +510,7 @@ def test_parse3():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("{ 1or2 }"))
+    print(parse("{ 1 * 2 }"))
     print(eval_ast(parse("{1+2}"), None, None))
 
 def test_parse4():
@@ -574,7 +577,24 @@ def test_parse10():
         )
     print(parse("{while i<30 do {i=i+1;a=a+1;} end;}"))
 
-test_parse()
+def test_parse12():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("{for (i = 3; i < 10; i = i + 1;) do {a = a + 1;} end;;}"))
+
+
+def test_parse11():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("{var UB = 999;var LB = 100;var mx = 0; for( i = LB ; i < UB + 1 ; i = i + 1;) do{for(j = LB; j < UB; j = j + 1;) do {if f == True  then {if i * j > mx then{mx = i * j;} else { 1;} end;;}else { 1;} end;;} end;;}end;print mx,;}"))
+    
+# test_parse()
 # test_parse1()
 # test_parse2()
 # test_parse3()
@@ -585,5 +605,5 @@ test_parse()
 # test_parse8()
 # test_parse9()
 # test_parse10()
-
-
+test_parse11()
+# test_parse12()
