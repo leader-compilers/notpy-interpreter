@@ -54,9 +54,22 @@ class Parser:
                 case _:
                     break
         return left
-
-    def parse_mult(self):
+    
+    def parse_floor(self):
         left = self.parse_unary()
+        while True:
+
+            match self.tokens.peek_token():
+                case Operator(op) if op == "//":
+                    self.tokens.advance()
+                    m = self.parse_floor()
+                    left = binary_operation(op, left, m)
+                case _:
+                    break
+        return left
+    
+    def parse_mult(self):
+        left = self.parse_floor()
         while True:
 
             match self.tokens.peek_token():
@@ -153,6 +166,13 @@ class Parser:
                     match self.tokens.peek_token():
                         case Operator(op) if op in ";":
                             return block(b)
+                case null("pass"):
+                    b.append(self.parse_null())
+                    # return self.parse_for()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
                 case Keyword("for"):
                     b.append(self.parse_for())
                     # return self.parse_for()
@@ -201,8 +221,8 @@ class Parser:
                     match self.tokens.peek_token():
                         case Operator(op) if op in ";":
                             return block(b)
-                # case functionName(name):
-                #     return self.parse_function_call()
+                case functionName(name):
+                    return self.parse_function_call()
                 case _:
                     tree = self.parse_set()
                     if tree == None:
@@ -304,6 +324,11 @@ class Parser:
                         raise SyntaxError("Unexpected token")
             case _:
                 return None
+            
+    def parse_null(self):
+        self.tokens.match(null("pass"))
+        return Null()
+
 
     def parse_while(self):
         self.tokens.match(Keyword("while"))
@@ -360,7 +385,7 @@ class Parser:
     def parse_for(self):
         self.tokens.match(Keyword("for"))
         self.tokens.match(Operator("("))
-        iterator = self.tokens.peek_token()
+        iterator = self.tokens.peek_token().word
         self.tokens.advance()
         self.tokens.match(Operator("="))
         initial_value = self.parse_expr()
@@ -561,6 +586,14 @@ def test_parse10():
         )
     print(parse("{while i<30 do {i=i+1;a=a+1;} end;}"))
 
+def test_parse11():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("{ pass; }"))
+    # print(eval_ast(parse("{1+2}"), None, None))
 
 # test_parse()
 # test_parse1()
@@ -573,3 +606,4 @@ def test_parse10():
 # test_parse8()
 # test_parse9()
 # test_parse10()
+# test_parse11()
