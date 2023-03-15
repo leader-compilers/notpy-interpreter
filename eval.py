@@ -314,13 +314,15 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         case binary_operation("*", left, right):
             return Fraction(eval_ast(left, lexical_scope, name_space) * eval_ast(right, lexical_scope, name_space))
         case binary_operation("/", left, right):
-            if eval_ast(right) == 0:
+            if eval_ast(right, lexical_scope, name_space) == 0:
                 raise Exception("Division by zero")
             return Fraction(eval_ast(left, lexical_scope, name_space) / eval_ast(right, lexical_scope, name_space))
         case binary_operation("^", left, right):
             return Fraction(eval_ast(left, lexical_scope, name_space) ** eval_ast(right, lexical_scope, name_space))
         case binary_operation("%", left, right):
             return Fraction(eval_ast(left, lexical_scope, name_space) % eval_ast(right, lexical_scope, name_space))
+        case binary_operation("//", left, right):
+            return Fraction(eval_ast(left, lexical_scope, name_space) // eval_ast(right, lexical_scope, name_space))
 
         # Boolean Operations
         case binary_operation("==", left, right):
@@ -339,7 +341,6 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             return bool(eval_ast(left, lexical_scope, name_space) or eval_ast(right, lexical_scope, name_space))
         case binary_operation("and", left, right):
             return bool(eval_ast(left, lexical_scope, name_space) and eval_ast(right, lexical_scope, name_space))
-
 
         # Binary List operations
         case binary_operation(".", left, right):
@@ -768,38 +769,28 @@ def test17():
 
     assert eval_ast(program, None, name_space) == (15**2)+(12**3)
 
+def test0():
+    name_space = environment()
+    e1 = numeric_literal(111)
+    e2 = numeric_literal(10)
+    e3 = binary_operation("//", e1, e2)
+    assert(eval_ast(e3, None, name_space) == 11)
 
-test1()
-test2()
-test3()
-test4()
-test5()
-test6()
-test7()
-test8()
-test9()
-test10()
-test11()
-test12()
-test13()
-test14()
-test15()
-test16()
-test17()
-
-
-def p1():
-    # sum of multiples of 3 and 5 below 100
-    i = identifier("i")
-    namespace = environment()
-    e1 = declare(i, numeric_literal(1))
-    e2 = declare(identifier("sum"), numeric_literal(0))
-
-    condition = binary_operation("<", get(i), numeric_literal(100))
-
-    #b2=if_statement(binary_operation("==", binary_operation("/", get(i), numeric_literal(3))),)
-
-    if_condition = binary_operation("||", binary_operation("==", binary_operation("%", get(i), numeric_literal(
-        3)), numeric_literal(0)), binary_operation("==", binary_operation("%", get(i), numeric_literal(5)), numeric_literal(0)))
-    if_expression = set(identifier("sum"), binary_operation(
-        "+", get(identifier("sum")), get(i)))
+# test0()
+# test1()
+# test2()
+# test3()
+# test4()
+# test5()
+# test6()
+# test7()
+# test8()
+# test9()
+# test10()
+# test11()
+# test12()
+# test13()
+# test14()
+# test15()
+# test16()
+# test17()
