@@ -4,6 +4,8 @@ from typing import Union
 
 class EndOfTokens(Exception):
     pass
+
+
 class EndOfStream(Exception):
     pass
 
@@ -16,7 +18,6 @@ class TokenError(Exception):
 
     def __str__(self):
         return f"{self.message} at line {self.line}, column {self.column}"
-
 
 
 @dataclass
@@ -92,13 +93,20 @@ class Operator:
 class EndOfLine:
     EOL: str
 
+
 @dataclass
 class functionName:
     name: str
 
-TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
-keywords = "print var true false if else then for while return end do List let in".split()
-operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not ;; { } //".split(
+
+@dataclass
+class null:
+    name: str
+
+
+TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null
+keywords = "pass def print var true false if else then for while return end do List let in".split()
+operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not } ;; {".split(
 )
 white_space = " \t\n"
 
@@ -131,19 +139,31 @@ class lexer:
         while True:
             try:
                 c = self.stream.next_char()
-                if c.isalpha():
+                if c.isalpha() or c == "_" or c.isdigit():
                     word = word + c
-                else:
+                elif c == "(":
                     self.stream.prev_char()
                     if word in keywords:
                         return Keyword(word)
+                    return functionName(word)
+
+                else:
+                    self.stream.prev_char()
+                    if word in keywords:
+                        if word == "pass":
+                            return null(word)
+                        else:
+                            return Keyword(word)
                     elif word in operators:
                         return Operator(word)
                     else:
                         return Identifier(word)
             except EndOfTokens:
                 if word in keywords:
-                    return Keyword(word)
+                    if word == "pass":
+                        return null(word)
+                    else:
+                        return Keyword(word)
                 elif word in operators:
                     return Operator(word)
                 else:
@@ -211,6 +231,13 @@ class lexer:
             else:
                 self.stream.prev_char()
                 return Operator("^")
+        elif c == "/":
+            c = self.stream.next_char()
+            if c == "/":
+                return Operator("//")
+            else:
+                self.stream.prev_char()
+                return Operator("/")
         else:
             return Operator(c)
 
@@ -222,7 +249,7 @@ class lexer:
                     return self.operator(c)
                 case c if c.isdigit():
                     return self.number(c)
-                case c if c.isalpha():
+                case c if c.isalpha() or c == "_":
                     return self.identifier(c)
                 case c if c == '"':
                     return self.string()
@@ -230,10 +257,9 @@ class lexer:
                     return self.next_token()
 
         except EndOfTokens:
-            return EndOfLine("EOL")
+            return EndOfLine("EndOfLine")
 
         raise TokenError("Invalid token", self.stream.line, self.stream.column)
-
 
     #  will be used in lexing
 
@@ -275,7 +301,7 @@ def lexing_test1():
 
 
 # declaration
-print("\n")
+# print("\n")
 
 
 def lexing_test2():
@@ -290,7 +316,7 @@ def lexing_test2():
 # for loop includes get, set, declare
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test3():
@@ -306,7 +332,7 @@ def lexing_test3():
 
 # while loop
 
-print("\n")
+# print("\n")
 
 
 def lexing_test4():
@@ -319,7 +345,7 @@ def lexing_test4():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test5():
@@ -333,7 +359,7 @@ def lexing_test5():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test6():
@@ -346,7 +372,7 @@ def lexing_test6():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test7():
@@ -359,12 +385,45 @@ def lexing_test7():
         print(e)
 
 
-print("\n")
+# print("\n")
 
 
 def lexing_test8():
     try:
         s = Stream.streamFromString("let a = 1 in a + 1 end")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+def lexing_test9():
+    try:
+        s = Stream.streamFromString(
+            "def 1dhairya_bhai_69(a, b){ return a + b; }")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+def lexing_test10():
+    try:
+        s = Stream.streamFromString(
+            "def sumofsquares(n){val = n * (n + 1) * (2 * n + 1) / 6; return val;}")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+def lexing_test11():
+    try:
+        s = Stream.streamFromString(
+            "{var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if i%3 == 0 or i%5==0 then {total = total + i;} else {pass;} end;;} end;}")
         l = lexer.lexerFromStream(s)
         for token in l:
             print(token)
