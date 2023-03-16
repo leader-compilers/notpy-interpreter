@@ -99,9 +99,14 @@ class functionName:
     name: str
 
 
-TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String
-keywords = "print var true false if else then for while return end do List let in".split()
-operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not ;; { }".split(
+@dataclass
+class null:
+    name: str
+
+
+TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null
+keywords = "pass def print var true false if else then for while return end do List let in".split()
+operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not } ;; {".split(
 )
 white_space = " \t\n"
 
@@ -134,14 +139,18 @@ class lexer:
         while True:
             try:
                 c = self.stream.next_char()
-                if c.isalpha():
+                if c.isalpha() or c == "_" or c.isdigit():
                     word = word + c
+                elif c == "(":
+                    self.stream.prev_char()
+                    if word in keywords:
+                        return Keyword(word)
+                    return functionName(word)
+
                 else:
                     self.stream.prev_char()
                     if word in keywords:
                         return Keyword(word)
-                    elif word in operators:
-                        return Operator(word)
                     elif word in operators:
                         return Operator(word)
                     else:
@@ -149,8 +158,6 @@ class lexer:
             except EndOfTokens:
                 if word in keywords:
                     return Keyword(word)
-                elif word in operators:
-                    return Operator(word)
                 elif word in operators:
                     return Operator(word)
                 else:
@@ -218,6 +225,13 @@ class lexer:
             else:
                 self.stream.prev_char()
                 return Operator("^")
+        elif c == "/":
+            c = self.stream.next_char()
+            if c == "/":
+                return Operator("//")
+            else:
+                self.stream.prev_char()
+                return Operator("/")
         else:
             return Operator(c)
 
@@ -229,7 +243,7 @@ class lexer:
                     return self.operator(c)
                 case c if c.isdigit():
                     return self.number(c)
-                case c if c.isalpha():
+                case c if c.isalpha() or c == "_":
                     return self.identifier(c)
                 case c if c == '"':
                     return self.string()
@@ -237,7 +251,7 @@ class lexer:
                     return self.next_token()
 
         except EndOfTokens:
-            return EndOfLine("EOL")
+            return EndOfLine("EndOfLine")
 
         raise TokenError("Invalid token", self.stream.line, self.stream.column)
 
@@ -376,13 +390,3 @@ def lexing_test8():
             print(token)
     except TokenError as e:
         print(e)
-
-
-lexing_test1()
-lexing_test3()
-lexing_test2()
-lexing_test4()
-lexing_test5()
-lexing_test6()
-lexing_test7()
-lexing_test8()
