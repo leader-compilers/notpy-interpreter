@@ -170,16 +170,6 @@ class Parser:
                             return block(b)
                 case null("pass"):
                     b.append(self.parse_null())
-
-
-                    # return self.parse_for()
-                    # return block(b)
-                    match self.tokens.peek_token():
-                        case Operator(op) if op in ";":
-                            return block(b)
-                case Keyword("for"):
-                    b.append(self.parse_for())
-
                     # return self.parse_for()
                     # return block(b)
                     match self.tokens.peek_token():
@@ -243,12 +233,13 @@ class Parser:
                     b.append(self.parse_function_call())
                     # return self.parse_declare()
                     # print(self.tokens.peek_token())
-                    self.tokens.match(Operator(";"))
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            self.tokens.advance()
                     # print(self.tokens.peek_token(), "1")
                 case _:
                     tree = self.parse_logic()
-                    return tree
-                    
+                    return tree          
         return block(b)
     
     def parse_expr_func(self):
@@ -306,7 +297,6 @@ class Parser:
                     match self.tokens.peek_token():
                         case Operator(op) if op in ";":
                             return block(b)
-
                 case Keyword("print"):
                     
                     b.append(self.parse_print())
@@ -315,17 +305,6 @@ class Parser:
                 case Keyword("List"):
                     b.append(self.parse_List())
                     # return self.parse_List()
-
-                case functionName(name):
-                    return self.parse_function_call()
-                case _:
-                    tree = self.parse_set()
-                    if tree == None:
-                        tree = self.parse_logic()
-                        # print(tree)
-                        # print("i")
-                        # print(tree)
-
                     # return block(b)
                     match self.tokens.peek_token():
                         case Operator(op) if op in ";":
@@ -345,8 +324,7 @@ class Parser:
                     # print(self.tokens.peek_token(), "1")
                 case _:
                     b.append(self.parse_logic())
-                    return b
-                    
+                    return b            
         return block(b)
     
     def parse_function_call(self):
@@ -493,7 +471,7 @@ class Parser:
                 case Operator("}"):
                     self.tokens.advance()
                     break
-            exprs.append(self.parse_expr())
+            exprs.append(self.parse_expr_func())
             self.tokens.match(Operator(";"))
         b = block(exprs)
         self.tokens.match(Keyword("end"))
@@ -502,7 +480,10 @@ class Parser:
 
     def parse_if(self):
         self.tokens.match(Keyword("if"))
-        c = self.parse_logic()
+        c = self.parse_expr()
+        match self.tokens.peek_token():
+            case Operator(";"):
+                self.tokens.advance()
         self.tokens.match(Keyword("then"))
         exprs = []
         while True:
@@ -512,7 +493,7 @@ class Parser:
                 case Operator("}"):
                     self.tokens.advance()
                     break
-            exprs.append(self.parse_expr())
+            exprs.append(self.parse_expr_func())
             self.tokens.match(Operator(";"))
         t = block(exprs)
         self.tokens.match(Keyword("else"))
@@ -524,7 +505,7 @@ class Parser:
                 case Operator("}"):
                     self.tokens.advance()
                     break
-            exprs.append(self.parse_expr())
+            exprs.append(self.parse_expr_func())
             self.tokens.match(Operator(";"))
         f = block(exprs)
         self.tokens.match(Keyword("end"))
@@ -555,7 +536,7 @@ class Parser:
                 case Operator(op) if op in "}":
                     self.tokens.advance()
                     break
-            exprs.append(self.parse_expr())
+            exprs.append(self.parse_expr_func())
             self.tokens.match(Operator(";"))
         body = block(exprs)
         self.tokens.match(Keyword("end"))
@@ -699,7 +680,7 @@ def test_parse6():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("{if 1 then {2;3;} else {3;} end;}"))
+    print(parse("{if i==3 then {2;3;} else {3;} end;}"))
 
 
 def test_parse7():
@@ -748,6 +729,46 @@ def test_parse11():
     print(parse("{ pass; }"))
     # print(eval_ast(parse("{1+2}"), None, None))
 
+def test_parse12():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("{var k =i*j; if ispalindrome(k) == True then {if i * j > mx then {mx = i * j;} else { pass;} end;;} else { pass;} end;;}"))
+
+def test_parse13():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse('''{var UB = 999;
+var LB = 100;
+
+def is_palindrome(n){
+      a = n;
+      b = 0;
+      while n > 0 do{
+            b = n % 10 + b * 10;
+            n = n // 10;
+      }
+      end;
+      return a == b;
+};
+
+var mx = 0;
+for(i = LB; i < UB + 1; i = i + 1;) do{
+      for(j = LB; j < UB; j = j + 1;) do{
+            var k = i*j;
+            if is_palindrome(k) == True then {
+                  if i * j > mx then {mx = i * j;} else { pass;} end;;}
+            else { pass;}
+            end;;
+      }
+      end;;
+}
+end;print mx;}'''))
 # test_parse()
 # test_parse1()
 # test_parse2()
@@ -760,3 +781,4 @@ def test_parse11():
 # test_parse9()
 # test_parse10()
 # test_parse11()
+# test_parse13()
