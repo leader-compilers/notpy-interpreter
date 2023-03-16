@@ -645,7 +645,7 @@ def test_parse3():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("{ 1or2 }"))
+    print(parse("{ 1 or 2; }"))
     print(eval_ast(parse("{1+2}"), None, None))
 
 
@@ -709,7 +709,7 @@ def test_parse9():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("fun(1); s = 1;"))
+    print(parse("{fun(1); s = 1; fun(1);}"))
 
 
 def test_parse10():
@@ -778,7 +778,7 @@ end;print mx;}'''))
 # test_parse6()
 # test_parse7()
 # test_parse8()
-# test_parse9()
+test_parse9()
 # test_parse10()
 # test_parse11()
 # test_parse13()
