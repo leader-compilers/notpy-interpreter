@@ -142,6 +142,14 @@ class lexer:
                 if c.isalpha() or c == "_" or c.isdigit():
                     word = word + c
                 elif c == "(":
+
+                    self.stream.prev_char()
+                    if word in keywords:
+                        return Keyword(word)
+                    return functionName(word)
+
+                else:
+
                     self.stream.prev_char()
                     if word in keywords:
                         return Keyword(word)
@@ -150,14 +158,20 @@ class lexer:
                 else:
                     self.stream.prev_char()
                     if word in keywords:
-                        return Keyword(word)
+                        if word == "pass":
+                            return null(word)
+                        else:
+                            return Keyword(word)
                     elif word in operators:
                         return Operator(word)
                     else:
                         return Identifier(word)
             except EndOfTokens:
                 if word in keywords:
-                    return Keyword(word)
+                    if word == "pass":
+                        return null(word)
+                    else:
+                        return Keyword(word)
                 elif word in operators:
                     return Operator(word)
                 else:
@@ -390,3 +404,38 @@ def lexing_test8():
             print(token)
     except TokenError as e:
         print(e)
+
+
+def lexing_test9():
+    try:
+        s = Stream.streamFromString(
+            "def 1dhairya_bhai_69(a, b){ return a + b; }")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+def lexing_test10():
+    try:
+        s = Stream.streamFromString(
+            "def sumofsquares(n){val = n * (n + 1) * (2 * n + 1) / 6; return val;}")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+
+def lexing_test11():
+    try:
+        s = Stream.streamFromString(
+            "{var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if i%3 == 0 or i%5==0 then {total = total + i;} else {pass;} end;;} end;}")
+        l = lexer.lexerFromStream(s)
+        for token in l:
+            print(token)
+    except TokenError as e:
+        print(e)
+
+

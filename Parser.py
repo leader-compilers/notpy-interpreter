@@ -170,6 +170,16 @@ class Parser:
                             return block(b)
                 case null("pass"):
                     b.append(self.parse_null())
+
+
+                    # return self.parse_for()
+                    # return block(b)
+                    match self.tokens.peek_token():
+                        case Operator(op) if op in ";":
+                            return block(b)
+                case Keyword("for"):
+                    b.append(self.parse_for())
+
                     # return self.parse_for()
                     # return block(b)
                     match self.tokens.peek_token():
@@ -296,6 +306,7 @@ class Parser:
                     match self.tokens.peek_token():
                         case Operator(op) if op in ";":
                             return block(b)
+
                 case Keyword("print"):
                     
                     b.append(self.parse_print())
@@ -304,6 +315,17 @@ class Parser:
                 case Keyword("List"):
                     b.append(self.parse_List())
                     # return self.parse_List()
+
+                case functionName(name):
+                    return self.parse_function_call()
+                case _:
+                    tree = self.parse_set()
+                    if tree == None:
+                        tree = self.parse_logic()
+                        # print(tree)
+                        # print("i")
+                        # print(tree)
+
                     # return block(b)
                     match self.tokens.peek_token():
                         case Operator(op) if op in ";":
