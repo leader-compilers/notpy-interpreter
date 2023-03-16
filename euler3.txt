@@ -1,0 +1,17 @@
+
+var factor = 2;
+var num = 600851475143; 
+while factor * factor < num do 
+    {
+        if num%factor == 0 then 
+            {
+                num = num / factor; 
+                factor = 2;
+            } 
+        else 
+            {
+                factor = factor + 1;
+            } 
+        end;;
+    } end; 
+print num;

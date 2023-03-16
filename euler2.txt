@@ -1,0 +1,23 @@
+
+var i=1; 
+var j=2; 
+var summ=0; 
+while j < 4000000 do 
+    {
+        if j%2 == 0 then 
+            {
+                summ = summ+j;
+            } 
+        else 
+            {
+                summ =summ;
+            } 
+        end;;
+        var temp=j;
+        j=i+j; 
+        i=temp; 
+
+    } end; 
+
+print summ;
+
