@@ -142,6 +142,14 @@ class lexer:
                 if c.isalpha() or c == "_" or c.isdigit():
                     word = word + c
                 elif c == "(":
+
+                    self.stream.prev_char()
+                    if word in keywords:
+                        return Keyword(word)
+                    return functionName(word)
+
+                else:
+
                     self.stream.prev_char()
                     if word in keywords:
                         return Keyword(word)
@@ -210,20 +218,20 @@ class lexer:
             else:
                 self.stream.prev_char()
                 return Operator("<")
-        elif c == "&":
-            c = self.stream.next_char()
-            if c == "&":
-                return Operator("and")
-            else:
-                self.stream.prev_char()
-                return Operator("&")
-        elif c == "|":
-            c = self.stream.next_char()
-            if c == "|":
-                return Operator("or")
-            else:
-                self.stream.prev_char()
-                return Operator("|")
+        # elif c == "&":
+        #     c = self.stream.next_char()
+        #     if c == "&":
+        #         return Operator("and")
+        #     else:
+        #         self.stream.prev_char()
+        #         return Operator("&")
+        # elif c == "|":
+        #     c = self.stream.next_char()
+        #     if c == "|":
+        #         return Operator("or")
+        #     else:
+        #         self.stream.prev_char()
+        #         return Operator("|")
         elif c == "^":
             c = self.stream.next_char()
             if c == "^":
