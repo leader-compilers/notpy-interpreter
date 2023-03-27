@@ -476,8 +476,13 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 # Tests
 
 # basic arithmetic
-
-
+def test():
+    name_space = environment()
+    e1 = bool_literal(True)
+    i = identifier("x")
+    eval_ast(declare(i, e1), None, name_space)
+    assert(eval_ast(binary_operation("==", i, bool_literal(True)), None, name_space) == True)
+test()
 def test1():
     e1 = numeric_literal(4)
     e2 = numeric_literal(5)
