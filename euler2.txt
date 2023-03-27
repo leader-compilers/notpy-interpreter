@@ -1,23 +1,21 @@
-
+{
 var i=1; 
 var j=2; 
 var summ=0; 
-while j < 4000000 do 
+while (j < 4000000)
     {
-        if j%2 == 0 then 
+        if (j%2 == 0) 
             {
                 summ = summ+j;
             } 
         else 
             {
                 summ =summ;
-            } 
-        end;;
+            }
         var temp=j;
         j=i+j; 
         i=temp; 
-
-    } end; 
+    }
 
 print summ;
-
+}
