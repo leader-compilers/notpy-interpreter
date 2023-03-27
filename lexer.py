@@ -104,8 +104,20 @@ class null:
     name: str
 
 
-TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null
-keywords = "pass def print var true false if else then for while return end do List let in".split()
+@dataclass
+class boolValue:
+    name: str
+
+
+TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
+keywords = "pass def print var True False if else then for while return end do List let in".split()
+@dataclass
+class boolValue:
+    name: str
+
+
+TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
+keywords = "pass def print var True False if else then for while return end do List let in".split()
 operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not } ;; {".split(
 )
 white_space = " \t\n"
@@ -152,6 +164,10 @@ class lexer:
                     if word in keywords:
                         if word == "pass":
                             return null(word)
+                        elif word == "True" or word == "False":
+                            return boolValue(word)
+                        elif word == "True" or word == "False":
+                            return boolValue(word)
                         else:
                             return Keyword(word)
                     elif word in operators:
@@ -162,6 +178,10 @@ class lexer:
                 if word in keywords:
                     if word == "pass":
                         return null(word)
+                    elif word == "True" or word == "False":
+                        return boolValue(word)
+                    elif word == "True" or word == "False":
+                        return boolValue(word)
                     else:
                         return Keyword(word)
                 elif word in operators:
@@ -224,6 +244,20 @@ class lexer:
             else:
                 self.stream.prev_char()
                 return Operator("|")
+        elif c == "&":
+            c = self.stream.next_char()
+            if c == "&":
+                return Operator("and")
+            else:
+                self.stream.prev_char()
+                return Operator("&")
+        elif c == "|":
+            c = self.stream.next_char()
+            if c == "|":
+                return Operator("or")
+            else:
+                self.stream.prev_char()
+                return Operator("|")
         elif c == "^":
             c = self.stream.next_char()
             if c == "^":
@@ -258,6 +292,8 @@ class lexer:
 
         except EndOfTokens:
             return EndOfLine("EndOfLine")
+            #raise EndOfTokens()
+            #raise EndOfTokens()
 
         raise TokenError("Invalid token", self.stream.line, self.stream.column)
 
@@ -423,7 +459,7 @@ def lexing_test10():
 def lexing_test11():
     try:
         s = Stream.streamFromString(
-            "{var total = 0; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if i%3 == 0 or i%5==0 then {total = total + i;} else {pass;} end;;} end;}")
+            "{var total = False; for( i = 1 ; i < 1001 ; i = i + 1; ) do {if i%3 == 0 or i%5==0 then {total = total + i;} else {pass;} end;;} end;}")
         l = lexer.lexerFromStream(s)
         for token in l:
             print(token)
