@@ -56,7 +56,6 @@ class Parser:
         while True:
             match self.tokens.peek_token():
                 case Operator(op) if op in "!":
-                case Operator(op) if op in "!":
                     self.tokens.advance()
                     m = self.parse_unary()
                     left = unary_operation(op, m)

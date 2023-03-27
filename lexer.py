@@ -161,13 +161,6 @@ class lexer:
                     return functionName(word)
 
                 else:
-
-                    self.stream.prev_char()
-                    if word in keywords:
-                        return Keyword(word)
-                    return functionName(word)
-
-                else:
                     self.stream.prev_char()
                     if word in keywords:
                         if word == "pass":
