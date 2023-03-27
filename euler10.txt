@@ -1,0 +1,35 @@
+{
+    def isprime(n){
+        var flag = 0;
+        if n>1 then {
+            var sqrt = 1/2;
+            for(i = 2; i < n^sqrt+1; i = i + 1;) do{
+                if n%i == 0 then {
+                    flag = 0;
+                    i = 3000000;
+                }
+                else { flag = 1;}end;;
+            }end;;
+        }
+
+        else { flag = 0;}end;;
+
+      return flag;
+    };
+
+    
+    var j = 0;
+    var sum = 0;
+
+    while j < 2000000 do 
+    {
+        var y = {isprime(j);};
+
+        if y == 1 then {sum = sum + j;} else { pass;} end;;
+        j = j+1;
+
+
+    } end; 
+
+    print sum;
+}

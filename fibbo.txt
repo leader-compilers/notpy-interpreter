@@ -1,0 +1,42 @@
+{
+def fib(n){
+    var ans = 1;
+    if n == 0 or n == 1 then
+    {
+        ans = n;
+    } 
+    else
+    {
+        var t1 = n-1;;
+        var t2 = n-2;;
+        var temp1 = {fib(t1);};;
+        var temp2 = {fib(t2);};;
+        ans = temp1 + temp2;
+    }
+    end;;
+    return ans;
+};
+var output = {fib(27);};
+print output;
+}
+{
+def fib(n){
+    var ans = 1;
+    if n == 0 or n == 1 then
+    {
+        ans = n;
+    } 
+    else
+    {
+        var t1 = n-1;;
+        var t2 = n-2;;
+        var temp1 = {fib(t1);};;
+        var temp2 = {fib(t2);};;
+        ans = temp1 + temp2;
+    }
+    end;;
+    return ans;
+};
+var output = {fib(27);};
+print output;
+}
