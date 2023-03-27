@@ -12,7 +12,7 @@ def main(filename):
     tokens = l.lexer.lexerFromStream(stream)
     parse = p.Parser.call_parser(tokens)
     ast = p.Parser.parse_expr(parse)
-    print(ast)
+    # print(ast)
     output = e.eval_ast(ast)
 
-main("euler2.txt")
+main("euler4.txt")
