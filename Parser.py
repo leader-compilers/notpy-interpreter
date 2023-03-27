@@ -30,6 +30,9 @@ class Parser:
             case boolValue(name):
                 self.tokens.advance()
                 return bool_literal(bool(name))
+            case boolValue(name):
+                self.tokens.advance()
+                return bool_literal(bool(name))
             case String(value):
                 self.tokens.advance()
                 return string_literal(value)
@@ -52,6 +55,7 @@ class Parser:
         left = self.parse_power()
         while True:
             match self.tokens.peek_token():
+                case Operator(op) if op in "!":
                 case Operator(op) if op in "!":
                     self.tokens.advance()
                     m = self.parse_unary()
@@ -285,6 +289,20 @@ class Parser:
                     
                 case Keyword("for"):
                     b.append(self.parse_for())
+                    # return self.parse_for()
+                    # return block(b)
+                    # print(self.tokens.peek_token())
+                    # self.tokens.match(Operator(";"))
+                case Keyword("if"):
+                    b.append(self.parse_if())
+                    # return self.parse_if()
+                    self.tokens.match(Operator(";"))
+                case Keyword("def"):
+                    # return self.parse_function()
+                    b.append(self.parse_function())
+                    # return block(b)
+                    # print(self.tokens.peek_token())
+                    self.tokens.match(Operator(";"))
                     
                 case Keyword("if"):
                     b.append(self.parse_if())
@@ -307,6 +325,15 @@ class Parser:
                     b.append(self.parse_declare())
                     self.tokens.match(Operator(";"))
 
+                    # print(b)
+                    # return self.parse_declare()
+                    
+                    # match self.tokens.peek_token():
+                    #     case Operator(op) if op in ";":
+                    #         return block(b)
+                    # self.tokens.match(Operator(";"))
+                    # self.tokens.match(Operator("}"))
+                    # print(self.tokens.peek_token())
                 case functionName(name):
                     b.append(self.parse_function_call())
                     match self.tokens.peek_token():

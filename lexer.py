@@ -111,6 +111,13 @@ class boolValue:
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
 keywords = "pass def print var True False if else then for while return end do List let in".split()
+@dataclass
+class boolValue:
+    name: str
+
+
+TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
+keywords = "pass def print var True False if else then for while return end do List let in".split()
 operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not } ;; {".split(
 )
 white_space = " \t\n"
@@ -153,12 +160,20 @@ class lexer:
                         return Keyword(word)
                     return functionName(word)
 
+                else:
+
+                    self.stream.prev_char()
+                    if word in keywords:
+                        return Keyword(word)
+                    return functionName(word)
 
                 else:
                     self.stream.prev_char()
                     if word in keywords:
                         if word == "pass":
                             return null(word)
+                        elif word == "True" or word == "False":
+                            return boolValue(word)
                         elif word == "True" or word == "False":
                             return boolValue(word)
                         else:
@@ -171,6 +186,8 @@ class lexer:
                 if word in keywords:
                     if word == "pass":
                         return null(word)
+                    elif word == "True" or word == "False":
+                        return boolValue(word)
                     elif word == "True" or word == "False":
                         return boolValue(word)
                     else:
@@ -235,6 +252,20 @@ class lexer:
             else:
                 self.stream.prev_char()
                 return Operator("|")
+        elif c == "&":
+            c = self.stream.next_char()
+            if c == "&":
+                return Operator("and")
+            else:
+                self.stream.prev_char()
+                return Operator("&")
+        elif c == "|":
+            c = self.stream.next_char()
+            if c == "|":
+                return Operator("or")
+            else:
+                self.stream.prev_char()
+                return Operator("|")
         elif c == "^":
             c = self.stream.next_char()
             if c == "^":
@@ -269,6 +300,7 @@ class lexer:
 
         except EndOfTokens:
             return EndOfLine("EndOfLine")
+            #raise EndOfTokens()
             #raise EndOfTokens()
 
         raise TokenError("Invalid token", self.stream.line, self.stream.column)
