@@ -49,6 +49,7 @@ def test1_binOps():
     v.load(compile(e4))
     assert(v.execute() == True)
 
+
     e5 = binary_operation(">", e1, e2)
     v.load(compile(e5))
     assert(v.execute() == True)
@@ -59,12 +60,24 @@ def test1_binOps():
     v.load(compile(e7))
     assert(v.execute() == True)
 
+
     e8 = binary_operation("&&", e5, e6)
     v.load(compile(e8))
     assert(v.execute() == False)
     e9 = binary_operation("||", e5, e6)
     v.load(compile(e9))
     assert(v.execute() == True)
+
+
+    e3 = bool_literal(True)
+    e2 = bool_literal(False)
+    e1 = string_literal("hello")
+    e4 = binary_operation("&&", e2, e3)
+    e5 = binary_operation("&&", e1, e4)
+    v.load(compile(e5))
+    assert(v.execute() == False)
+
+
 
 def test2_stringOps():
     ## CONCAT

@@ -525,6 +525,7 @@ class VM:
                         string += self.data.pop()
                     self.data.append(string)
                     self.ip += 1
+                    
                 case I.STRSLICE():
                     hop = int(self.data.pop())
                     stop = int(self.data.pop())
