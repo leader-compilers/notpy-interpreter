@@ -1,0 +1,22 @@
+{
+def sumofsquares(n){
+    var val = 2*n*n*n + n*n + 2*n*n + n;
+    val = val / 6;
+    return val;
+}
+
+
+def squareofsum(n){
+    var val = n*n + n;
+    val = val*val/4;
+    return val;
+}
+
+
+var y = squareofsum(4);
+var x = sumofsquares(4);
+
+var ans = y - x;
+
+print ans;
+}
