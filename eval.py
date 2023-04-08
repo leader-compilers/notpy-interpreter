@@ -1,10 +1,42 @@
 from typing import List
 from dataclasses import dataclass
 from fractions import Fraction
+from typing import Union, Optional, NewType
+import pytest
+
+
+currentID = 0
+
+
+def fresh():
+    global currentID
+    currentID = currentID + 1
+    return currentID
+
+
+@dataclass
+class NumType:
+    pass
+
+
+@dataclass
+class BoolType:
+    pass
+
+
+@dataclass
+class StringType:
+    pass
+
+
+@dataclass
+class NoneType:
+    pass
 
 
 @dataclass
 class Null():
+    type: NoneType = NoneType()
     pass
 
 # Literals
@@ -13,6 +45,7 @@ class Null():
 @dataclass
 class numeric_literal:
     value: Fraction
+    type: NumType = NumType()
 
     def __init__(self, numerator, denominator=1):
         self.value = Fraction(numerator, denominator)
@@ -21,11 +54,13 @@ class numeric_literal:
 @dataclass
 class bool_literal:
     value: bool
+    type: BoolType = BoolType()
 
 
 @dataclass
 class string_literal:
     value: str
+    type: StringType = StringType()
 
 
 # Binary Operations(Arithmetic and Boolean)
@@ -34,23 +69,28 @@ class binary_operation:
     operator: str
     left: "AST"
     right: "AST"
+    type: Optional[Union[NumType, BoolType]] = None
 
 
 @dataclass
 class unary_operation:
     operator: str
     operand: "AST"
+    type: Optional[Union[NumType, BoolType]] = None
+
 
 @dataclass
 class u_list_operation:
     operator: str
     first: "AST"
 
+
 @dataclass
 class b_list_operation:
     operator: str
     first: "AST"
     second: "AST"
+
 
 @dataclass
 class t_list_operation:
@@ -64,59 +104,80 @@ class t_list_operation:
 
 @dataclass
 class string_concat:
+    operator: str
     operands: List["AST"]
+    type: StringType = StringType()
 
 
 @dataclass
 class string_slice:
+    opeartor: str
     string: "AST"
     start: "AST"
     stop: "AST"
     hop: "AST" = numeric_literal(1)
+    type: StringType = StringType()
 
 
 # Let Expressions
 @dataclass
 class let_var:
     name: str
+    id: int
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
+    def make(name):
+        return let_var(name, fresh())
 
 # variables
+
+
 @dataclass
 class let:
     variable: let_var
     e1: "AST"
     e2: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass
 class identifier:
     name: str
+    id: int
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
+
+    def make(name):
+        return identifier(name, fresh())
 
 
 @dataclass
 class declare:
     variable: identifier
     value: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass
 class get:
     variable: identifier
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass
 class set:
     variable: identifier
     value: "AST"
-
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 # If Expressions
+
+
 @dataclass
 class if_statement:
     condition: "AST"
     if_exp: "AST"
     else_exp: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 # While Loops
 
@@ -125,6 +186,7 @@ class if_statement:
 class while_loop:
     condition: "AST"
     body: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 # For loop
 
@@ -136,21 +198,19 @@ class for_loop:
     condition: "AST"
     updation: "AST"
     body: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass
 class block:
     exps: List["AST"]
-
-
-@dataclass
-class Null:
-    pass
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass
 class print_statement:
     exps: List["AST"]
+    type: NoneType = NoneType()
 
 
 @dataclass
@@ -192,19 +252,20 @@ class Lists:
 
 
 # Functions
-
 @dataclass
 class Function:
     name: identifier
     parameters: List[identifier]
     body: 'AST'
     return_exp: 'AST'
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass
 class FunctionCall:
     function: identifier
     arguments: List['AST']
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass  # to keep track of the function name and its parameters in our environment
@@ -222,7 +283,6 @@ Value = Fraction | bool | str
 def ProgramNotSupported():
     raise Exception(
         "Program not supported, it may be in the future versions of the language")
-
 
 
 # the name_space dictionary acts as a global variable
@@ -324,7 +384,6 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         case binary_operation("and", left, right):
             return bool(eval_ast(left, lexical_scope, name_space) and eval_ast(right, lexical_scope, name_space))
 
-
         # If Statements
         case if_statement(condition, if_exp, else_exp):
             if eval_ast(condition, lexical_scope, name_space):
@@ -396,7 +455,6 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             print("")
             return return_val
 
-
         # Functions
         case Function(identifier(name), parameters, body, return_exp):
             name_space.add_to_scope(
@@ -417,7 +475,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 function.return_exp, lexical_scope, name_space)
             name_space.end_scope()
             return return_value
-        
+
         case u_list_operation("self", left):
             return eval_ast(left, lexical_scope, name_space)
         case u_list_operation("head", left):
@@ -433,7 +491,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             if(len(our_list) == 0):
                 return True
             return False
-        
+
         case b_list_operation("cons", left, right):
             our_list = eval_ast(right, lexical_scope, name_space)
             output_list = []
@@ -448,7 +506,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             if(index >= len(our_list)):
                 raise Exception("Index out of bounds")
             return our_list[index]
-        
+
         case t_list_operation("set", left, index, value):
             our_list = eval_ast(left, lexical_scope, name_space)
             index = int(eval_ast(index, lexical_scope, name_space))
@@ -463,13 +521,20 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 # Tests
 
 # basic arithmetic
+
+
 def test():
     name_space = environment()
     e1 = bool_literal(True)
     i = identifier("x")
     eval_ast(declare(i, e1), None, name_space)
-    assert(eval_ast(binary_operation("==", i, bool_literal(True)), None, name_space) == True)
-test()
+    assert(eval_ast(binary_operation(
+        "==", i, bool_literal(True)), None, name_space) == True)
+
+
+#test()
+
+
 def test1():
     e1 = numeric_literal(4)
     e2 = numeric_literal(5)
@@ -675,10 +740,11 @@ def test14():  # Test for print
     assert(eval_ast(print_statement(
         [e1, e2, e3, e4, e5, e6]), None, name_space) == "12HelloWorldTrue0")
 
+
 def test15():
     name_space = environment()
 
-    ## Testing on single unnested list
+    # Testing on single unnested list
     e1 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
     e2 = u_list_operation("self", e1)
     assert(eval_ast(e2, None, name_space) == [1, 2, 3])
@@ -691,9 +757,9 @@ def test15():
     e6 = b_list_operation("cons", numeric_literal(0), e1)
     assert(eval_ast(e6, None, name_space) == [0, 1, 2, 3])
 
-
-    ## Testing for matrix
-    e1 = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([numeric_literal(4), numeric_literal(5), numeric_literal(6)]), Lists([numeric_literal(7), numeric_literal(8), numeric_literal(9)])])
+    # Testing for matrix
+    e1 = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([numeric_literal(
+        4), numeric_literal(5), numeric_literal(6)]), Lists([numeric_literal(7), numeric_literal(8), numeric_literal(9)])])
     e2 = u_list_operation("self", e1)
     assert(eval_ast(e2, None, name_space) == [[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     e3 = u_list_operation("head", e1)
@@ -702,13 +768,15 @@ def test15():
     assert(eval_ast(e4, None, name_space) == [[4, 5, 6], [7, 8, 9]])
     e5 = u_list_operation("is_empty", e1)
     assert(eval_ast(e5, None, name_space) == False)
-    e6 = b_list_operation("cons", Lists([numeric_literal(0), numeric_literal(0), numeric_literal(0)]), e1)
-    assert(eval_ast(e6, None, name_space) == [[0, 0, 0], [1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    e6 = b_list_operation("cons", Lists(
+        [numeric_literal(0), numeric_literal(0), numeric_literal(0)]), e1)
+    assert(eval_ast(e6, None, name_space) == [
+           [0, 0, 0], [1, 2, 3], [4, 5, 6], [7, 8, 9]])
     e7 = b_list_operation("cons", string_literal("Hello"), e1)
-    assert(eval_ast(e7, None, name_space) == ["Hello", [1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    assert(eval_ast(e7, None, name_space) == [
+           "Hello", [1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
-
-    ## Testing for chain operations on list
+    # Testing for chain operations on list
     e1 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
     e2 = u_list_operation("tail", e1)
     e3 = u_list_operation("head", e2)
@@ -718,17 +786,17 @@ def test15():
     e5 = u_list_operation("tail", e4)
     assert(eval_ast(e5, None, name_space) == [2, 3])
 
-
-    ## Testing for chain operations on matrix
-    e1 = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([numeric_literal(4), numeric_literal(5), numeric_literal(6)]), Lists([numeric_literal(7), numeric_literal(8), numeric_literal(9)])])
+    # Testing for chain operations on matrix
+    e1 = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([numeric_literal(
+        4), numeric_literal(5), numeric_literal(6)]), Lists([numeric_literal(7), numeric_literal(8), numeric_literal(9)])])
     e2 = u_list_operation("tail", e1)
     e3 = u_list_operation("head", e2)
     assert(eval_ast(e3, None, name_space) == [4, 5, 6])
-    e4 = b_list_operation("cons", Lists([numeric_literal(0), numeric_literal(0), numeric_literal(0)]), e2)
+    e4 = b_list_operation("cons", Lists(
+        [numeric_literal(0), numeric_literal(0), numeric_literal(0)]), e2)
     assert(eval_ast(e4, None, name_space) == [[0, 0, 0], [4, 5, 6], [7, 8, 9]])
 
-
-    ## Testing for empty list
+    # Testing for empty list
     e1 = Lists([])
     e2 = u_list_operation("self", e1)
     assert(eval_ast(e2, None, name_space) == [])
@@ -741,8 +809,7 @@ def test15():
     e6 = b_list_operation("cons", numeric_literal(0), e1)
     assert(eval_ast(e6, None, name_space) == [0])
 
-
-    ## Testing for empty matrix
+    # Testing for empty matrix
     e1 = Lists([Lists([]), Lists([]), Lists([])])
     e2 = u_list_operation("self", e1)
     assert(eval_ast(e2, None, name_space) == [[], [], []])
@@ -752,37 +819,34 @@ def test15():
     assert(eval_ast(e4, None, name_space) == [[], []])
     e5 = u_list_operation("is_empty", e1)
     assert(eval_ast(e5, None, name_space) == False)
-    e6 = b_list_operation("cons", Lists([numeric_literal(0), numeric_literal(0), numeric_literal(0)]), e1)
+    e6 = b_list_operation("cons", Lists(
+        [numeric_literal(0), numeric_literal(0), numeric_literal(0)]), e1)
     assert(eval_ast(e6, None, name_space) == [[0, 0, 0], [], [], []])
 
-
-    ## Testing for looking up values in single list
+    # Testing for looking up values in single list
     e1 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
     e2 = b_list_operation("find", e1, numeric_literal(2))
     assert(eval_ast(e2, None, name_space) == 3)
-    
 
-    ## Testing for looking up values in matrix
-    e1 = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([numeric_literal(4), numeric_literal(5), numeric_literal(6)]), Lists([numeric_literal(7), numeric_literal(8), numeric_literal(9)])])
+    # Testing for looking up values in matrix
+    e1 = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([numeric_literal(
+        4), numeric_literal(5), numeric_literal(6)]), Lists([numeric_literal(7), numeric_literal(8), numeric_literal(9)])])
     e2 = b_list_operation("find", e1, numeric_literal(2))
     assert(eval_ast(e2, None, name_space) == [7, 8, 9])
     e3 = b_list_operation("find", e2, numeric_literal(0))
     assert(eval_ast(e3, None, name_space) == 7)
 
-
-    ## Testing for setting values in single list
+    # Testing for setting values in single list
     e1 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
     e2 = t_list_operation("set", e1, numeric_literal(2), numeric_literal(0))
     assert(eval_ast(e2, None, name_space) == [1, 2, 0])
 
-
-    ## Testing for setting values in matrix
+    # Testing for setting values in matrix
     # e1 = Lists([Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)]), Lists([numeric_literal(4), numeric_literal(5), numeric_literal(6)]), Lists([numeric_literal(7), numeric_literal(8), numeric_literal(9)])])
     # e2 = t_list_operation("set", e1, Lists[numeric_literal(2)], numeric_literal(0))
     # assert(eval_ast(e2, None, name_space) == [[1, 2, 3], [4, 5, 6], 0])
 
-
-    ## Testing for operation like: m[0][1] = 10
+    # Testing for operation like: m[0][1] = 10
     # This will be done by first doing a "find" operation on the matrix to get the row
     # Then, we will do a "set" operation on the row to set the value
     # In general, we will do a "find" operation on the matrix for n-1 times, where n is the number of dimensions
@@ -791,6 +855,7 @@ def test15():
     # e2 = b_list_operation("find", e1, numeric_literal(0))
     # e3 = t_list_operation("set", e2, numeric_literal(1), numeric_literal(10))
     # assert(eval_ast(e3, None, name_space) == [1, 10, 3])
+
 
 def test16():
     name_space = environment()
@@ -823,6 +888,7 @@ def test17():
 
     assert eval_ast(program, None, name_space) == (15**2)+(12**3)
 
+
 def test0():
     name_space = environment()
     e1 = numeric_literal(111)
@@ -830,21 +896,22 @@ def test0():
     e3 = binary_operation("//", e1, e2)
     assert(eval_ast(e3, None, name_space) == 11)
 
-test0()
-test1()
-test2()
-test3()
-test4()
-test5()
-test6()
-test7()
-test8()
-test9()
-test10()
-test11()
-test12()
-test13()
-test14()
-test15()
-test16()
-test17()
+
+# test0()
+# test1()
+# test2()
+# test3()
+# test4()
+# test5()
+# test6()
+# test7()
+# test8()
+# test9()
+# test10()
+# test11()
+# test12()
+# test13()
+# test14()
+# test15()
+# test16()
+# test17()

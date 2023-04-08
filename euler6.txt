@@ -1,4 +1,3 @@
-{
 def sumofsquares(n){
     var val = 2*n*n*n + n*n + 2*n*n + n;
     val = val / 6;
@@ -19,4 +18,3 @@ var x = sumofsquares(4);
 var ans = y - x;
 
 print ans;
-}
