@@ -1,4 +1,3 @@
-{
 var factor = 2;
 var num = 600851475143; 
 while (factor * factor < num)
@@ -14,5 +13,3 @@ while (factor * factor < num)
             } 
     }
 print num;
-}
-    
