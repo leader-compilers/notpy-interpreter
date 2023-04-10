@@ -513,6 +513,10 @@ class VM:
                     self.data.pop()
                     self.ip += 1
                 case I.LOAD(localID):
+                    #the data would be loaded from the current frame
+                    #if none then error
+                    if(self.currentFrame.locals[localID] == None):
+                        raise Exception("variable not found")
                     self.data.append(self.currentFrame.locals[localID])
                     self.ip += 1
                 case I.STORE(localID):
@@ -630,6 +634,24 @@ def do_codegen (
             codegen_(stop)
             codegen_(hop)
             code.emit(I.STRSLICE())
+        case identifier() as i:
+            code.emit(I.LOAD(i.localID))
+
+        #recheck below cases
+        case let_var() as i:
+            code.emit(I.LOAD(i.localID))
+        case let(let_var as i, e1, e2):
+            codegen_(e1)
+            code.emit(I.STORE(i.localID))
+            codegen_(e2)
+
+        case get(identifier as i):
+            code.emit(I.LOAD(i.localID))
+        
+        case set(identifier as i, e):
+            codegen_(e)
+            code.emit(I.STORE(i.localID))
+        
 
         # case (Variable() as v) | unary_operation("!", Variable() as v):
         #     code.emit(I.LOAD(v.localID))
