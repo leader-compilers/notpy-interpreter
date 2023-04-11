@@ -1,5 +1,6 @@
 from bytecode import *
-
+def test():
+    pass
 def test1_binOps():
     v = VM()
     e1 = binary_operation("+", numeric_literal(1), numeric_literal(2))
