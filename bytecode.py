@@ -4,17 +4,15 @@ from typing import Union, MutableMapping, List, TypeVar, Optional
 from eval import *
 
 
-
-
 def ProgramNotSupported():
     raise Exception(
         "Program not supported, it may be in the future versions of the language")
 
 
-
 @dataclass
 class Label:
     target: int
+
 
 class I:
     """The instructions for our stack VM."""
@@ -121,13 +119,14 @@ class I:
     @dataclass
     class HALT:
         pass
+
     @dataclass
     class PRINT:
         pass
 
 
 Instruction = (
-      I.PUSH
+    I.PUSH
     | I.ADD
     | I.SUB
     | I.MUL
@@ -155,6 +154,7 @@ Instruction = (
     | I.PRINT
 )
 
+
 @dataclass
 class ByteCode:
     insns: List[Instruction]
@@ -180,7 +180,8 @@ class ByteCode:
 #         self.locals = [None] * MAX_LOCALS
 
 #global environment
-global_environment : dict[int:'Value']= {}
+global_environment: dict[int:'Value'] = {}
+
 
 class VM:
     bytecode: ByteCode
@@ -195,7 +196,7 @@ class VM:
     def restart(self):
         self.ip = 0
         self.data = []
-        self.currentFrame = Frame()
+        #self.currentFrame = Frame()
 
     def execute(self) -> Value:
         while True:
@@ -252,32 +253,32 @@ class VM:
                 case I.EQ():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left==right)
+                    self.data.append(left == right)
                     self.ip += 1
                 case I.NEQ():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left!=right)
+                    self.data.append(left != right)
                     self.ip += 1
                 case I.LT():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left<right)
+                    self.data.append(left < right)
                     self.ip += 1
                 case I.GT():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left>right)
+                    self.data.append(left > right)
                     self.ip += 1
                 case I.LE():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left<=right)
+                    self.data.append(left <= right)
                     self.ip += 1
                 case I.GE():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left>=right)
+                    self.data.append(left >= right)
                     self.ip += 1
                 case I.JMP(label):
                     self.ip = label.target
@@ -306,8 +307,8 @@ class VM:
                     self.data.pop()
                     self.ip += 1
                 case I.LOAD(localID):
-                    #the data would be loaded from the current frame
-                    #if none then error
+                    # the data would be loaded from the current frame
+                    # if none then error
                     # if(self.currentFrame.locals[localID] == None):
                     #     raise Exception("variable not found")
                     # self.data.append(self.currentFrame.locals[localID])
@@ -320,7 +321,7 @@ class VM:
                     v = self.data.pop()
 
                     global_environment[localID] = v
-                  
+
                     #self.currentFrame.locals[localID] = v
                     self.ip += 1
                 case I.PRINT():
@@ -332,7 +333,7 @@ class VM:
                         string += self.data.pop()
                     self.data.append(string)
                     self.ip += 1
-                    
+
                 case I.STRSLICE():
                     hop = int(self.data.pop())
                     stop = int(self.data.pop())
@@ -341,7 +342,10 @@ class VM:
                     self.data.append(string[start:stop:hop])
                     self.ip += 1
                 case I.HALT():
+                    if(len(self.data)==0):
+                        return None
                     return self.data.pop()
+
 
 def codegen(program: AST) -> ByteCode:
     code = ByteCode()
@@ -349,7 +353,8 @@ def codegen(program: AST) -> ByteCode:
     code.emit(I.HALT())
     return code
 
-def do_codegen (
+
+def do_codegen(
         program: AST,
         code: ByteCode
 ) -> None:
@@ -372,7 +377,6 @@ def do_codegen (
         "!=": I.NEQ(),
         # "!": I.NOT()
     }
-
 
     match program:
         case numeric_literal(what) | bool_literal(what) | string_literal(what):
@@ -437,11 +441,11 @@ def do_codegen (
             codegen_(stop)
             codegen_(hop)
             code.emit(I.STRSLICE())
-        
-        case identifier() as i:
-            code.emit(I.LOAD(i.id))
 
-        #recheck below cases
+        # case identifier(name) as i:
+        #     code.emit(I.LOAD(i.id))
+
+        # recheck below cases
         case let_var() as i:
             code.emit(I.LOAD(i.id))
         # case let(let_var as i, e1, e2):
@@ -451,17 +455,17 @@ def do_codegen (
 
         case get(identifier as i):
             code.emit(I.LOAD(i.id))
-        
+
         case set(identifier as i, e):
             codegen_(e)
             code.emit(I.STORE(i.id))
-        
+
         case declare(identifier as i, e):
             codegen_(e)
             code.emit(I.STORE(i.id))
-        
-        case print_statement(exps):
-            for exp in exps:
+
+        case print_statement() as i:
+            for exp in i.exps:
                 codegen_(exp)
                 code.emit(I.PRINT())
 
@@ -476,6 +480,7 @@ def do_codegen (
         #     codegen_(e2)
         # case TypeAssertion(expr, _):
         #     codegen_(expr)
+
 
 def compile(program):
     return codegen(program)
