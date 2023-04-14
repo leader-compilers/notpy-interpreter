@@ -149,6 +149,19 @@ def test3_unaryOps():
     assert(v.execute() == 1)
 
 
-test1_binOps()
-test2_stringOps()
-test3_unaryOps()
+# test1_binOps()
+# test2_stringOps()
+# test3_unaryOps()
+
+
+def test4():
+    a1=declare(identifier("a",0), numeric_literal(1))
+    a2=set(identifier("a",0),binary_operation("+", get(identifier("a",0)), numeric_literal(1)))
+    a3=print_statement(get(identifier("a",0)))
+    b=block([a1,a2,a3])
+    v=VM()
+    v.load(compile(b))
+    #print(v.insns)
+    v.execute()
+
+test4()
