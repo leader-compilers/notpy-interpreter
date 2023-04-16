@@ -8,12 +8,12 @@ while (i<1000000){
         {
             cnt=cnt+1;
             if(start%2==0){start=start/2;}
-            else{start=3*start+1}
+            else{start=3*start+1;}
 
         } 
     i=i+1;
-    print i;
-    print cnt;
+    print i, cnt;
+
 }
     
     
