@@ -66,6 +66,11 @@ class string_literal:
 class Lists:
     value: List["AST"]
 
+
+@dataclass
+class dict_literal:
+    value: dict["AST", "AST"]
+    
 # Binary Operations(Arithmetic and Boolean)
 @dataclass
 class binary_operation:
@@ -102,19 +107,36 @@ class t_list_operation:
     second: "AST"
     third: "AST"
 
+@dataclass
+class u_dict_operation:
+    operator: str
+    first: "AST"
+
+@dataclass
+class b_dict_operation:
+    operator: str
+    first: "AST"
+    second: "AST"
+
+@dataclass
+class t_dict_operation:
+    operator: str
+    first: "AST"
+    second: "AST"
+    third: "AST"
+
+
 # String operation (Can take variable number of strings depending on the operation)
 
 
 @dataclass
 class string_concat:
-    operator: str
     operands: List["AST"]
     type: StringType = StringType()
 
 
 @dataclass
 class string_slice:
-    opeartor: str
     string: "AST"
     start: "AST"
     stop: "AST"
@@ -160,6 +182,14 @@ class declare:
     type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
+@dataclass 
+class declare_list:
+    variable: identifier
+    size: "AST"
+    value: "AST"
+    # type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
+
+
 @dataclass
 class get:
     variable: identifier
@@ -178,6 +208,11 @@ class update_list:
     value: List
     # type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
+@dataclass
+class update_dict:
+    varaible: identifier
+    value: dict
+    # type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 # If Expressions
 
@@ -279,7 +314,7 @@ class FunctionObject:
     return_exp: 'AST'
 
 
-AST = t_list_operation | b_list_operation | u_list_operation | Lists | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | identifier | get | set | declare | Function | FunctionCall | Null
+AST =  t_dict_operation | b_dict_operation | u_dict_operation | update_dict | dict_literal | update_list | declare_list | t_list_operation | b_list_operation | u_list_operation | Lists | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | identifier | get | set | declare | Function | FunctionCall | Null
 
 Value = Fraction | bool | str
 
@@ -315,6 +350,15 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             name_space.add_to_scope(variable.name, eval_ast(
                 value, lexical_scope, name_space))
             return 0
+        
+        case declare_list(variable, size, value):
+            size = int(eval_ast(size, lexical_scope, name_space))
+            value = eval_ast(value, lexical_scope, name_space)
+            List = []
+            for i in range(size):
+                List.append(value)
+            name_space.add_to_scope(variable.name, List)
+            return 0
 
         # eval_ast might never get this node as we are using get, however, it is still here for completeness
         case identifier(name):
@@ -341,6 +385,9 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         case update_list(variable, value):
             name_space.update_scope(variable.name, value)
             return Fraction(0)
+        case update_dict(variable, value):
+            name_space.update_scope(variable.name, value)
+            return Fraction(0)
 
         # Literals
         case numeric_literal(value):
@@ -355,6 +402,12 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 output_list.append(
                     eval_ast(value[i], lexical_scope, name_space))
             return output_list
+        case dict_literal(value):
+            output_dict = {}
+            for i in range(len(value)):
+                output_dict[eval_ast(value[i][0], lexical_scope, name_space)] = eval_ast(
+                    value[i][1], lexical_scope, name_space)
+            return output_dict
 
         # Arithmetic Operations
         case binary_operation("+", left, right):
@@ -486,43 +539,78 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 
         case u_list_operation("self", left):
             return eval_ast(left, lexical_scope, name_space)
-        case u_list_operation("head", list):
-            our_list = eval_ast(get(list), lexical_scope, name_space)
+        case u_list_operation("head", List):
+            our_list = eval_ast(get(List), lexical_scope, name_space)
             if(len(our_list) == 0):
                 return Null
             return our_list[0]
-        case u_list_operation("tail", list):
-            our_list = eval_ast(get(list), lexical_scope, name_space)
+        case u_list_operation("tail", List):
+            our_list = eval_ast(get(List), lexical_scope, name_space)
             return our_list[1:]
-        case u_list_operation("is_empty", list):
-            our_list = eval_ast(get(list), lexical_scope, name_space)
+        case u_list_operation("is_empty", List):
+            our_list = eval_ast(get(List), lexical_scope, name_space)
             if(len(our_list) == 0):
                 return True
             return False
+        case u_list_operation("length", List):
+            our_list = eval_ast(get(List), lexical_scope, name_space)
+            return len(our_list)
 
-        case b_list_operation("cons", left, list):
-            our_list = eval_ast(get(list), lexical_scope, name_space)
+        case b_list_operation("cons", left, List):
+            our_list = eval_ast(get(List), lexical_scope, name_space)
             output_list = []
             value = eval_ast(left, lexical_scope, name_space)
             output_list.append(value)
             for i in range(len(our_list)):
                 output_list.append(our_list[i])
-            eval_ast(update_list(list, output_list), lexical_scope, name_space)
+            eval_ast(update_list(List, output_list), lexical_scope, name_space)
             return output_list
-        case b_list_operation("find", list, index):
-            our_list = eval_ast(get(list), lexical_scope, name_space)
+        case b_list_operation("find", List, index):
+            our_list = eval_ast(get(List), lexical_scope, name_space)
             index = int(eval_ast(index, lexical_scope, name_space))
             if(index >= len(our_list)):
                 raise Exception("Index out of bounds")
             return our_list[index]
 
-        case t_list_operation("set", list, index, value):
-            our_list = eval_ast(get(list), lexical_scope, name_space)
+        case t_list_operation("set", List, index, value):
+            our_list = eval_ast(get(List), lexical_scope, name_space)
             index = int(eval_ast(index, lexical_scope, name_space))
             value = eval_ast(value, lexical_scope, name_space)
             our_list[index] = value
-            eval_ast(update_list(list, our_list), lexical_scope, name_space)
+            eval_ast(update_list(List, our_list), lexical_scope, name_space)
             return our_list
+        
+        case u_dict_operation("length", dict):
+            our_dict = eval_ast(get(dict), lexical_scope, name_space)
+            return len(our_dict)
+        case u_dict_operation("keys", dict):
+            our_dict = eval_ast(get(dict), lexical_scope, name_space)
+            return list(our_dict.keys())
+        case u_dict_operation("values", dict):
+            our_dict = eval_ast(get(dict), lexical_scope, name_space)
+            return list(our_dict.values())
+        case u_dict_operation("items", dict):
+            our_dict = eval_ast(get(dict), lexical_scope, name_space)
+            return list(our_dict.items())
+        
+        case b_dict_operation("get", dict, key):
+            our_dict = eval_ast(get(dict), lexical_scope, name_space)
+            key = eval_ast(key, lexical_scope, name_space)
+            return our_dict[key]
+        case b_dict_operation("delete", dict, key):
+            our_dict = eval_ast(get(dict), lexical_scope, name_space)
+            key = eval_ast(key, lexical_scope, name_space)
+            del our_dict[key]
+            eval_ast(update_dict(dict, our_dict), lexical_scope, name_space)
+            return our_dict
+        
+        case t_dict_operation("set", dict, key, value):
+            our_dict = eval_ast(get(dict), lexical_scope, name_space)
+            key = eval_ast(key, lexical_scope, name_space)
+            value = eval_ast(value, lexical_scope, name_space)
+            our_dict[key] = value
+            eval_ast(update_dict(dict, our_dict), lexical_scope, name_space)
+            return our_dict
 
     # print(subprogram)
     ProgramNotSupported()
@@ -531,7 +619,6 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 # Tests
 
 # basic arithmetic
-
 
 def test():
     name_space = environment()
@@ -794,7 +881,20 @@ def test15():
         e5 = t_list_operation("set", l, numeric_literal(i), numeric_literal(4))
         eval_ast(e5, None, name_space)
     assert(eval_ast(get(l), None, name_space) == [4, 4, 4, 4])
-    
+
+
+    ## Tests for declare list
+    L = identifier.make("L")
+    e1 = declare_list(L, numeric_literal(5), numeric_literal(0))
+    eval_ast(e1, None, name_space)
+    assert(eval_ast(get(L), None, name_space) == [0, 0, 0, 0, 0])
+
+    e5 = t_list_operation("set", L, numeric_literal(2), numeric_literal(4))
+    assert(eval_ast(e5, None, name_space) == [0, 0, 4, 0, 0])
+
+    e6 = u_list_operation("length", L)
+    assert(eval_ast(e6, None, name_space) == 5)
+
 
 def test16():
     name_space = environment()
@@ -828,6 +928,34 @@ def test17():
     assert eval_ast(program, None, name_space) == (15**2)+(12**3)
 
 
+def test18():
+    name_space = environment()
+    d = identifier.make("d")
+    e1 = dict_literal([(string_literal("a"), numeric_literal(1)), (string_literal("b"), numeric_literal(2))])
+    eval_ast(declare(d, e1), None, name_space)
+
+    ## Testing u_dict_operation
+    assert(eval_ast(get(d), None, name_space) == {"a": 1, "b": 2})
+    assert(eval_ast(u_dict_operation("length", d), None, name_space) == 2)
+    assert(eval_ast(u_dict_operation("keys", d), None, name_space) == ["a", "b"])
+    assert(eval_ast(u_dict_operation("values", d), None, name_space) == [1, 2])
+    assert(eval_ast(u_dict_operation("items", d), None, name_space) == [("a", 1), ("b", 2)])
+
+
+    ## Testing b_dict_operation
+    assert(eval_ast(b_dict_operation("get", d, string_literal("a")), None, name_space) == 1)
+    assert(eval_ast(b_dict_operation("get", d, string_literal("b")), None, name_space) == 2)
+    assert(eval_ast(b_dict_operation("delete", d, string_literal("a")), None, name_space) == {"b": 2})
+    assert(eval_ast(b_dict_operation("delete", d, string_literal("b")), None, name_space) == {})
+
+    ## Testing t_dict_operation
+    assert(eval_ast(t_dict_operation("set", d, string_literal("z"), numeric_literal(26)), None, name_space) == {"z": 26})
+    assert(eval_ast(t_dict_operation("set", d, string_literal("y"), numeric_literal(25)), None, name_space) == {"z": 26, "y": 25})
+    assert(eval_ast(t_dict_operation("set", d, string_literal("x"), numeric_literal(24)), None, name_space) == {"z": 26, "y": 25, "x": 24})
+    assert(eval_ast(u_dict_operation("length", d), None, name_space) == 3)
+
+
+
 def test0():
     name_space = environment()
     e1 = numeric_literal(111)
@@ -854,3 +982,4 @@ def test0():
 # test15()
 # test16()
 #test17()
+test18()
