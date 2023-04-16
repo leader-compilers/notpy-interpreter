@@ -141,7 +141,7 @@ class I:
         pass
 
     @dataclass
-    class DICT_LENGTH:
+    class LENGTH:
         pass
 
     @dataclass
@@ -157,7 +157,7 @@ class I:
         pass
 
     @dataclass
-    class DICT_GET:
+    class FIND:
         pass
 
     @dataclass
@@ -165,7 +165,7 @@ class I:
         pass
 
     @dataclass
-    class DICT_SET:
+    class PUT:
         pass
 
 
@@ -200,13 +200,13 @@ Instruction = (
     | I.LIST_HEAD
     | I.INIT_LIST
     | I.BUILD_DICT
-    | I.DICT_LENGTH
     | I.DICT_KEYS
     | I.DICT_VALUES
     | I.DICT_ITEMS
-    | I.DICT_GET
     | I.DICT_DELETE
-    | I.DICT_SET
+    | I.PUT
+    | I.LENGTH
+    | I.FIND
 )
 
 
@@ -429,10 +429,6 @@ class VM:
                     our_dict = {k: v for k, v in reversed(our_dict.items())}
                     self.data.append(our_dict)
                     self.ip += 1
-                case I.DICT_LENGTH():
-                    our_dict = self.data.pop()
-                    self.data.append(len(our_dict))
-                    self.ip += 1
                 case I.DICT_KEYS():
                     our_dict = self.data.pop()
                     self.data.append(list(our_dict.keys()))
@@ -445,14 +441,6 @@ class VM:
                     our_dict = self.data.pop()
                     self.data.append(list(our_dict.items()))
                     self.ip += 1
-                case I.DICT_GET():
-                    our_key = self.data.pop()
-                    our_dict = self.data.pop()
-                    if our_key in our_dict.keys():
-                        self.data.append(our_dict[our_key])
-                    else:
-                        raise Exception("key not found")
-                    self.ip += 1
                 case I.DICT_DELETE():
                     our_key = self.data.pop()
                     our_dict = self.data.pop()
@@ -462,12 +450,43 @@ class VM:
                     else:
                         raise Exception("key not found")
                     self.ip += 1
-                case I.DICT_SET():
-                    our_val = self.data.pop()
-                    our_key = self.data.pop()
-                    our_dict = self.data.pop()
-                    our_dict[our_key] = our_val
-                    self.data.append(our_dict)
+
+                case I.LENGTH():
+                    data_structure = self.data.pop()
+                    if isinstance(data_structure, List) or isinstance(data_structure, dict):
+                        self.data.append(len(data_structure))
+                    else:
+                        raise Exception("Invalid type for length")
+                    self.ip += 1
+                case I.FIND():
+                    data_structure = self.data.pop()
+                    if isinstance(data_structure, List):
+                        index = int(self.data.pop())
+                        if(index > len(data_structure)):
+                            raise Exception("Index out of bounds")
+                        self.data.append(data_structure[index])
+                    elif isinstance(data_structure, dict):
+                        key = self.data.pop()
+                        if key not in data_structure.keys():
+                            raise Exception("Key not found")
+                        self.data.append(data_structure[key])
+                    else: 
+                        raise Exception("Invalid type for lookup")
+                    self.ip += 1
+                case I.PUT():
+                    data_structure = self.data.pop()
+                    if isinstance(data_structure, List):
+                        index = int(self.data.pop())
+                        if(index > len(data_structure)):
+                            raise Exception("Index out of bounds")
+                        data_structure[index] = self.data.pop()
+                        self.data.append(data_structure)
+                    elif isinstance(data_structure, dict):
+                        key = self.data.pop()
+                        data_structure[key] = self.data.pop()
+                        self.data.append(data_structure)
+                    else:
+                        raise Exception("Invalid type for lookup")
                     self.ip += 1
 
                 case I.HALT():
@@ -621,9 +640,7 @@ def do_codegen(
         #     codegen_(get(list))
         #     code.emit(I.LIST_HEAD())
 
-        case u_dict_operation("length", dict):
-            codegen_(get(dict))
-            code.emit(I.DICT_LENGTH())
+
         case u_dict_operation("keys", dict):
             codegen_(get(dict))
             code.emit(I.DICT_KEYS())
@@ -633,23 +650,24 @@ def do_codegen(
         case u_dict_operation("items", dict):
             codegen_(get(dict))
             code.emit(I.DICT_ITEMS())
-
-        case b_dict_operation("get", dict, key):
-            codegen_(get(dict))
-            codegen_(key)
-            code.emit(I.DICT_GET())
         case b_dict_operation("delete", dict, key):
             codegen_(get(dict))
             codegen_(key)
             code.emit(I.DICT_DELETE())
             code.emit(I.STORE(dict.id))
 
-        case t_dict_operation("set", dict, key, val):
-            codegen_(get(dict))
-            codegen_(key)
+        case length(x):
+            codegen_(get(x))
+            code.emit(I.LENGTH())
+        case find(x, index):
+            codegen_(index)
+            codegen_(get(x))
+            code.emit(I.FIND())
+        case put(x, index, val):
             codegen_(val)
-            code.emit(I.DICT_SET())
-            code.emit(I.STORE(dict.id))
+            codegen_(index)
+            codegen_(get(x))
+            code.emit(I.PUT())
 
 
         # case (Variable() as v) | unary_operation("!", Variable() as v):

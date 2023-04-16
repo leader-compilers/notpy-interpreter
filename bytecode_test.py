@@ -194,7 +194,7 @@ def test8_dictOps():
     assert(v.execute() == {"a": 1, "b": 2})
 
     ## Testing u_dict_operation
-    e1 = u_dict_operation("length", d)
+    e1 = length(d)
     v.load(compile(e1))
     assert(v.execute() == 2)
     e2 = u_dict_operation("keys", d)
@@ -209,10 +209,10 @@ def test8_dictOps():
 
 
     ## Testing b_dict_operation
-    e1 = b_dict_operation("get", d, string_literal("a"))
+    e1 = find(d, string_literal("a"))
     v.load(compile(e1))
     assert(v.execute() == 1)
-    e2 = b_dict_operation("get", d, string_literal("b"))
+    e2 = find(d, string_literal("b"))
     v.load(compile(e2))
     assert(v.execute() == 2)
     e3 = b_dict_operation("delete", d, string_literal("a"))
@@ -229,21 +229,21 @@ def test8_dictOps():
     assert(v.execute() == {})
 
     # ## Testing t_dict_operation
-    e1 = t_dict_operation("set", d, string_literal("z"), numeric_literal(26))
+    e1 = put(d, string_literal("z"), numeric_literal(26))
     v.load(compile(e1))
     v.execute()
     e4 = get(d)
     v.load(compile(e4))
     assert(v.execute() == {"z": 26})
 
-    e2 = t_dict_operation("set", d, string_literal("y"), numeric_literal(25))
+    e2 = put(d, string_literal("y"), numeric_literal(25))
     v.load(compile(e2))
     v.execute()
     e4 = get(d)
     v.load(compile(e4))
     assert(v.execute() == {"z": 26, "y": 25})
 
-    e3 = t_dict_operation("set", d, string_literal("z"), numeric_literal(0))
+    e3 = put(d, string_literal("z"), numeric_literal(0))
     v.load(compile(e3))
     v.execute()
     e4 = get(d)
