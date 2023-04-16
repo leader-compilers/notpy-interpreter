@@ -1,222 +1,7 @@
 from dataclasses import dataclass
 from fractions import Fraction
 from typing import Union, MutableMapping, List, TypeVar, Optional
-
-@dataclass
-class Null():
-    pass
-
-# Literals
-@dataclass
-class numeric_literal:
-    value: Fraction
-
-    def __init__(self, numerator, denominator=1):
-        self.value = Fraction(numerator, denominator)
-
-
-@dataclass
-class bool_literal:
-    value: bool
-
-
-@dataclass
-class string_literal:
-    value: str
-
-
-# Binary Operations(Arithmetic and Boolean)
-@dataclass
-class binary_operation:
-    operator: str
-    left: "AST"
-    right: "AST"
-
-
-@dataclass
-class unary_operation:
-    operator: str
-    operand: "AST"
-
-# String operation (Can take variable number of strings depending on the operation)
-
-
-@dataclass
-class string_concat:
-    operands: List["AST"]
-
-
-@dataclass
-class string_slice:
-    string: "AST"
-    start: "AST"
-    stop: "AST"
-    hop: "AST" = numeric_literal(1)
-
-
-# Let Expressions
-@dataclass
-class let_var:
-    name: str
-
-
-# variables
-@dataclass
-class let:
-    variable: let_var
-    e1: "AST"
-    e2: "AST"
-
-
-@dataclass
-class identifier:
-    name: str
-
-
-@dataclass
-class declare:
-    variable: identifier
-    value: "AST"
-
-
-@dataclass
-class get:
-    variable: identifier
-
-
-@dataclass
-class set:
-    variable: identifier
-    value: "AST"
-
-
-# If Expressions
-@dataclass
-class if_statement:
-    condition: "AST"
-    if_exp: "AST"
-    else_exp: "AST"
-
-# While Loops
-
-
-@dataclass
-class while_loop:
-    condition: "AST"
-    body: "AST"
-
-# For loop
-
-
-@dataclass
-class for_loop:
-    iterator: identifier
-    initial_value: "AST"
-    condition: "AST"
-    updation: "AST"
-    body: "AST"
-
-
-@dataclass
-class block:
-    exps: List["AST"]
-
-
-@dataclass
-class Null:
-    pass
-
-
-@dataclass
-class print_statement:
-    exps: List["AST"]
-
-
-@dataclass
-class environment:
-    scopes: list[dict]
-
-    def __init__(self):
-        self.scopes = [{}]
-
-    def start_scope(self):
-        self.scopes.append({})
-
-    def end_scope(self):
-        self.scopes.pop()
-
-    def add_to_scope(self, name, value):
-        if name in self.scopes[-1]:
-            raise Exception(
-                "Variable already defined, can't declare two variables with same name in same scope")
-        self.scopes[-1][name] = value
-
-    def get_from_scope(self, name):
-        for scope in reversed(self.scopes):
-            if name in scope:
-                return scope[name]
-        raise Exception("Variable not defined")
-
-    def update_scope(self, name, value):
-        for scope in reversed(self.scopes):
-            if name in scope:
-                scope[name] = value
-                return
-        raise Exception("Variable not defined")
-
-
-@dataclass
-class Lists:
-    value: List["AST"]
-
-
-@dataclass
-class cons:
-    value: "AST"
-    list: "AST"
-
-
-@dataclass
-class is_empty:
-    list: "AST" = Lists([])
-
-
-@dataclass
-class head:
-    list: "AST" = Lists([])
-
-
-@dataclass
-class tail:
-    list: "AST" = Lists([])
-
-
-# Functions
-
-@dataclass
-class Function:
-    name: identifier
-    parameters: List[identifier]
-    body: 'AST'
-    return_exp: 'AST'
-
-
-@dataclass
-class FunctionCall:
-    function: identifier
-    arguments: List['AST']
-
-
-@dataclass  # to keep track of the function name and its parameters in our environment
-class FunctionObject:
-    parameters: List['AST']
-    body: 'AST'
-    return_exp: 'AST'
-
-
-AST = Lists | cons | is_empty | head | tail | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | identifier | get | set | declare | Function | FunctionCall | Null
-
-Value = Fraction | bool | str
+from eval import *
 
 
 def ProgramNotSupported():
@@ -224,11 +9,10 @@ def ProgramNotSupported():
         "Program not supported, it may be in the future versions of the language")
 
 
-################################### NEW ############################################
-
 @dataclass
 class Label:
     target: int
+
 
 class I:
     """The instructions for our stack VM."""
@@ -333,16 +117,16 @@ class I:
         pass
 
     @dataclass
-    class PRINT:
-        length: int
+    class HALT:
+        pass
 
     @dataclass
-    class HALT:
+    class PRINT:
         pass
 
 
 Instruction = (
-      I.PUSH
+    I.PUSH
     | I.ADD
     | I.SUB
     | I.MUL
@@ -370,6 +154,7 @@ Instruction = (
     | I.PRINT
 )
 
+
 @dataclass
 class ByteCode:
     insns: List[Instruction]
@@ -387,18 +172,22 @@ class ByteCode:
         label.target = len(self.insns)
 
 
-class Frame:
-    locals: List[Value]
+# class Frame:
+#     locals: List[Value]
 
-    def __init__(self):
-        MAX_LOCALS = 32
-        self.locals = [None] * MAX_LOCALS
+#     def __init__(self):
+#         MAX_LOCALS = 32
+#         self.locals = [None] * MAX_LOCALS
+
+#global environment
+global_environment: dict[int:'Value'] = {}
+
 
 class VM:
     bytecode: ByteCode
     ip: int
     data: List[Value]
-    currentFrame: Frame
+    #currentFrame: Frame
 
     def load(self, bytecode):
         self.bytecode = bytecode
@@ -407,7 +196,7 @@ class VM:
     def restart(self):
         self.ip = 0
         self.data = []
-        self.currentFrame = Frame()
+        #self.currentFrame = Frame()
 
     def execute(self) -> Value:
         while True:
@@ -464,32 +253,32 @@ class VM:
                 case I.EQ():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left==right)
+                    self.data.append(left == right)
                     self.ip += 1
                 case I.NEQ():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left!=right)
+                    self.data.append(left != right)
                     self.ip += 1
                 case I.LT():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left<right)
+                    self.data.append(left < right)
                     self.ip += 1
                 case I.GT():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left>right)
+                    self.data.append(left > right)
                     self.ip += 1
                 case I.LE():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left<=right)
+                    self.data.append(left <= right)
                     self.ip += 1
                 case I.GE():
                     right = self.data.pop()
                     left = self.data.pop()
-                    self.data.append(left>=right)
+                    self.data.append(left >= right)
                     self.ip += 1
                 case I.JMP(label):
                     self.ip = label.target
@@ -518,11 +307,25 @@ class VM:
                     self.data.pop()
                     self.ip += 1
                 case I.LOAD(localID):
-                    self.data.append(self.currentFrame.locals[localID])
+                    # the data would be loaded from the current frame
+                    # if none then error
+                    # if(self.currentFrame.locals[localID] == None):
+                    #     raise Exception("variable not found")
+                    # self.data.append(self.currentFrame.locals[localID])
+                    if localID in global_environment.keys():
+                        self.data.append(global_environment[localID])
+                    else:
+                        raise Exception("variable not found")
                     self.ip += 1
                 case I.STORE(localID):
                     v = self.data.pop()
-                    self.currentFrame.locals[localID] = v
+
+                    global_environment[localID] = v
+
+                    #self.currentFrame.locals[localID] = v
+                    self.ip += 1
+                case I.PRINT():
+                    print(self.data.pop())
                     self.ip += 1
                 case I.STRCAT(size):
                     string = ""
@@ -530,6 +333,7 @@ class VM:
                         string += self.data.pop()
                     self.data.append(string)
                     self.ip += 1
+
                 case I.STRSLICE():
                     hop = int(self.data.pop())
                     stop = int(self.data.pop())
@@ -537,19 +341,11 @@ class VM:
                     string = self.data.pop()
                     self.data.append(string[start:stop:hop])
                     self.ip += 1
-                case I.PRINT(size):
-                    string = ""
-                    for i in range(size):
-                        s = self.data.pop()
-                        string += str(s)
-                        if i != size-1:
-                            string += " "
-                        print(s, end=" ")
-                    print()
-                    self.data.append(string)
-                    self.ip += 1
                 case I.HALT():
+                    if(len(self.data)==0):
+                        return None
                     return self.data.pop()
+
 
 def codegen(program: AST) -> ByteCode:
     code = ByteCode()
@@ -557,7 +353,8 @@ def codegen(program: AST) -> ByteCode:
     code.emit(I.HALT())
     return code
 
-def do_codegen (
+
+def do_codegen(
         program: AST,
         code: ByteCode
 ) -> None:
@@ -580,7 +377,6 @@ def do_codegen (
         "!=": I.NEQ(),
         # "!": I.NOT()
     }
-
 
     match program:
         case numeric_literal(what) | bool_literal(what) | string_literal(what):
@@ -645,11 +441,33 @@ def do_codegen (
             codegen_(stop)
             codegen_(hop)
             code.emit(I.STRSLICE())
-        case print_statement(expr_list):
-            for i in range(len(expr_list)-1, -1,-1):
-                codegen_(expr_list[i])
-            code.emit(I.PRINT(len(expr_list)))
 
+        # case identifier(name) as i:
+        #     code.emit(I.LOAD(i.id))
+
+        # recheck below cases
+        case let_var() as i:
+            code.emit(I.LOAD(i.id))
+        # case let(let_var as i, e1, e2):
+        #     codegen_(e1)
+        #     code.emit(I.STORE(i.localID))
+        #     codegen_(e2)
+
+        case get(identifier as i):
+            code.emit(I.LOAD(i.id))
+
+        case set(identifier as i, e):
+            codegen_(e)
+            code.emit(I.STORE(i.id))
+
+        case declare(identifier as i, e):
+            codegen_(e)
+            code.emit(I.STORE(i.id))
+
+        case print_statement() as i:
+            for exp in i.exps:
+                codegen_(exp)
+                code.emit(I.PRINT())
 
         # case (Variable() as v) | unary_operation("!", Variable() as v):
         #     code.emit(I.LOAD(v.localID))
@@ -662,6 +480,7 @@ def do_codegen (
         #     codegen_(e2)
         # case TypeAssertion(expr, _):
         #     codegen_(expr)
+
 
 def compile(program):
     return codegen(program)

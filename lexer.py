@@ -111,6 +111,8 @@ class boolValue:
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
 keywords = "pass def print var True False if else then for while return end do List let in".split()
+
+
 @dataclass
 class boolValue:
     name: str
@@ -154,6 +156,7 @@ class lexer:
                 if c.isalpha() or c == "_" or c.isdigit():
                     word = word + c
                 elif c == "(":
+
                     self.stream.prev_char()
                     if word in keywords:
                         return Keyword(word)

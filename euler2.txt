@@ -1,4 +1,3 @@
-{
 var i=1; 
 var j=2; 
 var summ=0; 
@@ -18,4 +17,3 @@ while (j < 4000000)
     }
 
 print summ;
-}
