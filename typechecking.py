@@ -3,270 +3,14 @@ from dataclasses import dataclass
 from fractions import Fraction
 from typing import Union, Optional, NewType
 import pytest
-
-
-@dataclass
-class NumType:
-    pass
-
-
-@dataclass
-class BoolType:
-    pass
-
-
-@dataclass
-class StringType:
-    pass
-
-
-@dataclass
-class NoneType:
-    pass
-
-
-@dataclass
-class Null():
-    pass
-
-
-# Literals
-
-
-@dataclass
-class numeric_literal:
-    value: Fraction
-    type: NumType = NumType()
-
-    def __init__(self, numerator, denominator=1):
-        self.value = Fraction(numerator, denominator)
-
-
-@dataclass
-class bool_literal:
-    value: bool
-    type: BoolType = BoolType()
-
-
-@dataclass
-class string_literal:
-    value: str
-    type: StringType = StringType()
-
-
-# Binary Operations(Arithmetic and Boolean)
-@dataclass
-class binary_operation:
-    operator: str
-    left: "AST"
-    right: "AST"
-    type: Optional[Union[NumType, BoolType]] = None
-
-
-@dataclass
-class unary_operation:
-    operator: str
-    operand: "AST"
-    type: Optional[Union[NumType, BoolType]] = None
-
-# String operation (Can take variable number of strings depending on the operation)
-
-
-@dataclass
-class string_concat:
-    operator: str
-    operands: List["AST"]
-    type: StringType = StringType()
-
-
-@dataclass
-class string_slice:
-    opeartor: str
-    string: "AST"
-    start: "AST"
-    stop: "AST"
-    hop: "AST" = numeric_literal(1)
-    type: StringType = StringType()
-
-
-# Let Expressions
-@dataclass
-class let_var:
-    name: str
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-# variables
-
-
-@dataclass
-class let:
-    variable: let_var
-    e1: "AST"
-    e2: "AST"
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-# left to typecheck
-
-
-@dataclass
-class identifier:
-    name: str
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-
-@dataclass
-class declare:
-    variable: identifier
-    value: "AST"
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-
-@dataclass
-class get:
-    variable: identifier
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-
-@dataclass
-class set:
-    variable: identifier
-    value: "AST"
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-# If Expressions
-
-
-@dataclass
-class if_statement:
-    condition: "AST"
-    if_exp: "AST"
-    else_exp: "AST"
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-# While Loops
-
-
-@dataclass
-class while_loop:
-    condition: "AST"
-    body: "AST"
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-# For loop
-
-
-@dataclass
-class for_loop:
-    iterator: identifier
-    initial_value: "AST"
-    condition: "AST"
-    updation: "AST"
-    body: "AST"
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-
-@dataclass
-class block:
-    exps: List["AST"]
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-
-@dataclass
-class print_statement:
-    exps: List["AST"]
-    type: NoneType = NoneType()
-
-
-@dataclass
-class Lists:
-    value: List["AST"]
-
-
-@dataclass
-class cons:
-    value: "AST"
-    list: "AST"
-
-
-@dataclass
-class is_empty:
-    list: "AST" = Lists([])
-
-
-@dataclass
-class head:
-    list: "AST" = Lists([])
-
-
-@dataclass
-class tail:
-    list: "AST" = Lists([])
-
-
-# Functions
-@dataclass
-class Function:
-    name: identifier
-    parameters: List[identifier]
-    body: 'AST'
-    return_exp: 'AST'
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
-
-
-@dataclass
-class FunctionCall:
-    function: identifier
-    arguments: List['AST']
-
-
-@dataclass  # to keep track of the function name and its parameters in our environment
-class FunctionObject:
-    parameters: List['AST']
-    body: 'AST'
-    return_exp: 'AST'
-
-
-AST = Lists | cons | is_empty | head | tail | print_statement | for_loop | unary_operation | numeric_literal | string_literal | string_concat | string_slice | binary_operation | let | let_var | bool_literal | if_statement | while_loop | block | identifier | get | set | declare | Function | FunctionCall | Null
-
-
-TypedAST = NewType('TypedAST', AST)
+from eval import *
 
 
 class TypeError(Exception):
     pass
 
 
-@dataclass
-class environment:
-    scopes: list[dict]
-
-    def __init__(self):
-        self.scopes = [{}]
-
-    def start_scope(self):
-        self.scopes.append({})
-
-    def end_scope(self):
-        self.scopes.pop()
-
-    def add_to_scope(self, name, value):
-        if name in self.scopes[-1]:
-            raise Exception(
-                "Variable already defined, can't declare two variables with same name in same scope")
-        self.scopes[-1][name] = value
-
-    def get_from_scope(self, name):
-        for scope in reversed(self.scopes):
-            if name in scope:
-                return scope[name]
-        raise Exception("Variable not defined")
-
-    def update_scope(self, name, value):
-        for scope in reversed(self.scopes):
-            if name in scope:
-                scope[name] = value
-                return
-        raise Exception("Variable not defined")
+TypedAST = NewType('TypedAST', AST)
 
 
 def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
@@ -316,20 +60,20 @@ def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
             return set(var, value, value.type)
 
         case unary_operation(op, operand) if op == "!":
-            top = typecheck(operand, lexical_scope, type_space)
-            if top.type != BoolType():
+            operand.type = typecheck(operand, lexical_scope, type_space).type
+            if operand.type != BoolType():
                 raise TypeError()
             return unary_operation(op, operand, BoolType())
         case unary_operation(op, operand) if op == "-":
-            top = typecheck(operand, lexical_scope, type_space)
-            if top.type != NumType():
+            operand.type = typecheck(operand, lexical_scope, type_space).type
+            if operand.type != NumType():
                 raise TypeError()
             return unary_operation(op, operand, NumType())
         case binary_operation(op, left, right):
             tl = typecheck(left, lexical_scope, type_space)
             tr = typecheck(right, lexical_scope, type_space)
 
-            if op in ["+", "-", "*", "/"]:
+            if op in ["+", "-", "*", "/", "%", "^", "**", ">>", "<<", "//"]:
                 if tl.type != NumType() or tr.type != NumType() or tl.type != tr.type:
                     raise TypeError()
                 return binary_operation(op, tl, tr, NumType())
@@ -358,7 +102,7 @@ def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
             type_space.start_scope()
 
             for i in exps:
-                i.type = typecheck(i, None, type_space).type
+                i.type = typecheck(i, lexical_scope, type_space).type
 
             type_space.end_scope()
 
@@ -374,6 +118,7 @@ def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
             return while_loop(tc, tb, NumType())
 
         case for_loop(iterator, initial_value, condition, updation, body):
+
             ti = typecheck(initial_value, lexical_scope, type_space)
             type_space.start_scope()
             iterator.type = ti.type
@@ -415,6 +160,30 @@ def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
                 i.type = typecheck(i, lexical_scope, type_space).type
             return print_statement(exps, NoneType())
 
+        case Function(identifier(name) as v, parameters, body, return_exp):
+            type_space.add_to_scope(
+                name, FunctionObject(parameters, body, return_exp))
+            return Function(v, parameters, body, return_exp, NoneType())
+
+        case FunctionCall(fn, args):
+            function = type_space.get_from_scope(fn.name)
+            for arg in args:
+                arg.type = typecheck(arg, lexical_scope, type_space).type
+            assert len(function.parameters) == len(args)
+
+            type_space.start_scope()
+            for i in range(len(args)):
+                type_space.add_to_scope(
+                    function.parameters[i].name, args[i].type)
+            for j in function.body.exps:
+                j.type = typecheck(j, lexical_scope, type_space).type
+
+            function.return_exp.type = typecheck(
+                function.return_exp, lexical_scope, type_space).type
+            fn.type = function.return_exp.type
+            type_space.end_scope()
+            return FunctionCall(fn, args, function.return_exp.type)
+
     raise TypeError()
 
 # Bin op test
@@ -423,10 +192,11 @@ def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
 def test_1():
     e1 = numeric_literal(2)
     e2 = numeric_literal(3)
+
     t1 = typecheck(binary_operation("+", e1, e2))
     t2 = typecheck(binary_operation("<", e1, e2))
-    assert t2.type == BoolType()
     assert t1.type == NumType()
+    assert t2.type == BoolType()
     with pytest.raises(TypeError):
         typecheck(binary_operation("+", binary_operation("*", numeric_literal(2), numeric_literal(3)),
                   binary_operation("<", numeric_literal(2), numeric_literal(3))))
@@ -464,8 +234,8 @@ def test_3():
 
 def test_4():
     type_space = environment()
-    i = identifier("i")
-    j = identifier("j")
+    i = identifier.make("i")
+    j = identifier.make("j")
     assert typecheck(declare(i, numeric_literal(0)),
                      None, type_space).type == NumType()
     assert typecheck(declare(j, numeric_literal(0)),
@@ -487,16 +257,16 @@ def test_4():
 
     e = while_loop(condition, body)
 
-    print(typecheck(e, None, type_space))
+    assert typecheck(e, None, type_space).type == NumType()
 
 # for loop test
 
 
 def test_5():
     type_space = environment()
-    iterator = identifier("i")
-    var = identifier("var")
-    last_iterator = identifier("last_iterator")
+    iterator = identifier.make("i")
+    var = identifier.make("var")
+    last_iterator = identifier.make("last_iterator")
 
     typecheck(declare(var, numeric_literal(0)), None, type_space)
     typecheck(declare(last_iterator, numeric_literal(0)), None, type_space)
@@ -504,13 +274,12 @@ def test_5():
     condition = binary_operation("<", get(iterator), numeric_literal(5))
     updation = set(iterator, binary_operation(
         "+", get(iterator), numeric_literal(1)))
-
     b1 = set(var, binary_operation("+", get(var), numeric_literal(1)))
     b2 = set(last_iterator, get(iterator))
     body = block([b1, b2])
 
     e1 = for_loop(iterator, numeric_literal(0), condition, updation, body)
-    print(typecheck(e1, None, type_space))
+    assert typecheck(e1, None, type_space).type == NumType()
 
 
 def test_6():
@@ -524,9 +293,25 @@ def test_6():
     print(typecheck(set(identifier("x"), numeric_literal(1)), None, type_space))
 
 
+def test_7():
+    type_space = environment()
+    i = identifier.make("i")
+    j = identifier.make("j")
+    fn = identifier.make("fn")
+
+    e = Function(fn, [i, j], block([]), binary_operation("+", get(i), get(j)))
+
+    f = binary_operation("+", FunctionCall(fn, [numeric_literal(15), numeric_literal(2)]),
+                         FunctionCall(
+        fn, [numeric_literal(12), numeric_literal(3)])
+    )
+    b = block([e, f])
+    assert typecheck(b, None, type_space).type == NumType()
+
 # test_1()
 # test_2()
 # test_3()
 # test_4()
 # test_5()
 # test_6()
+# test_7()

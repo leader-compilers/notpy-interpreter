@@ -111,6 +111,8 @@ class boolValue:
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
 keywords = "pass def print var True False if else then for while return end do List let in".split()
+
+
 @dataclass
 class boolValue:
     name: str
@@ -466,4 +468,3 @@ def lexing_test11():
             print(token)
     except TokenError as e:
         print(e)
-
