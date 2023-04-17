@@ -2,7 +2,7 @@ from typing import List
 from dataclasses import dataclass
 from fractions import Fraction
 from typing import Union, Optional, NewType
-import pytest
+
 from eval import *
 
 
