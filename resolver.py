@@ -105,6 +105,48 @@ def resolve(subprogram: AST, lexical_scope=None, name_space=None) -> AST:
             rargs = [resolve_(e) for e in args]
             return FunctionCall(rfn, rargs)
 
+        case Lists(lst):
+            return Lists([resolve_(e) for e in lst])
+        case dict_literal(dt):
+            a = []
+
+            for it in dt:
+                it0 = resolve_(it[0])
+                it1 = resolve_(it[1])
+                a.append((it0, it1))
+            return dict_literal(a)
+        case length(e):
+            re = resolve_(e)
+            return length(re)
+        case find(e1, e2):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            return find(re1, re2)
+        case put(e1, e2, e3):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            re3 = resolve_(e3)
+            return put(re1, re2, re3)
+        case u_dict_operation(op, e1):
+            re1 = resolve_(e1)
+            return u_dict_operation(op, re1)
+        case b_dict_operation(op, e1, e2):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            return b_dict_operation(op, re1, re2)
+        case u_list_operation(op, e1):
+            re1 = resolve_(e1)
+            return u_list_operation(op, re1)
+        case b_list_operation(op, e1, e2):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            return b_list_operation(op, re1, re2)
+        case declare_list(identifier(name) as v, e1, e2):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            name_space.add_to_scope(name, v)
+            return declare_list(v, re1, re2)
+
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -168,12 +210,13 @@ def test4():
     pp.pprint(re)
 
 # for loop
+
+
 def test5():
     iterator = identifier.make("i")
     var = identifier.make("var")
     last_iterator = identifier.make("last_iterator")
 
-    
     a1 = declare(var, numeric_literal(0))
     a2 = declare(last_iterator, numeric_literal(0))
 
@@ -190,8 +233,6 @@ def test5():
     pp.pprint(mainbody)
     re = resolve(mainbody)
     pp.pprint(re)
-
-
 
 
 # test1()

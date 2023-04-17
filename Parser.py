@@ -26,7 +26,7 @@ class Parser:
                         self.tokens.advance()
                         match self.tokens.peek_token():
                             case Identifier(name2):
-                                a = identifier(name2)
+                                a = identifier.make(name2)
                             case String(value):
                                 a = string_literal(value)
                             case Num(value):
@@ -36,52 +36,72 @@ class Parser:
                         match self.tokens.peek_token():
                             case Operator(op) if op in "=":
                                 self.tokens.advance()
-                                val = numeric_literal(self.tokens.peek_token().n)
+                                match self.tokens.peek_token():
+                                    case Num(value):
+                                        val = numeric_literal(value)
+                                    case String(value):
+                                        val = string_literal(value)
+                                    case Identifier(name2):
+                                        val = identifier.make(name2)
                                 self.tokens.advance()
                                 self.tokens.match(Operator(";"))
-                                return put(identifier(name), a, val)
-                        return find(identifier(name), a)
+                                return put(identifier.make(name), a, val)
+                        return find(identifier.make(name), a)
                     
                     case Operator(op) if op in ".":
                         self.tokens.advance()
                         if self.tokens.peek_token().word == "head":
                             self.tokens.advance()
-                            return u_list_operation("head", identifier(name))
+                            return u_list_operation("head", identifier.make(name))
                         elif self.tokens.peek_token().word == "tail":
                             self.tokens.advance()
-                            return u_list_operation("tail", identifier(name))
+                            return u_list_operation("tail", identifier.make(name))
                         elif self.tokens.peek_token().word == "empty":
                             self.tokens.advance()
-                            return u_list_operation("is_empty", identifier(name))
+                            return u_list_operation("is_empty", identifier.make(name))
                         elif self.tokens.peek_token().word == "cons":
                             self.tokens.advance()
                             self.tokens.match(Operator("("))
-                            a = numeric_literal(self.tokens.peek_token().n)
+                            match self.tokens.peek_token():
+                                case Identifier(name2):
+                                    a = identifier.make(name2)
+                                case String(value):
+                                    a = string_literal(value)
+                                case Num(value):
+                                    a = numeric_literal(value)
+                            # a = numeric_literal(self.tokens.peek_token().n)
                             self.tokens.advance()
+                            # print(self.tokens.peek_token())
                             self.tokens.match(Operator(")"))
                             self.tokens.match(Operator(";"))
-                            return b_list_operation("cons", a, identifier(name))
+                            return b_list_operation("cons", a, identifier.make(name))
                         elif self.tokens.peek_token().word == "length":
                             self.tokens.advance()
                             return length("length")
                         
                         elif self.tokens.peek_token().word == "keys":
                             self.tokens.advance()
-                            return u_dict_operation("keys", identifier(name))
+                            return u_dict_operation("keys", identifier.make(name))
                         elif self.tokens.peek_token().word == "values": 
                             self.tokens.advance()
-                            return u_dict_operation("values", identifier(name))
+                            return u_dict_operation("values", identifier.make(name))
                         elif self.tokens.peek_token().word == "items":
                             self.tokens.advance()
-                            return u_dict_operation("items", identifier(name))
+                            return u_dict_operation("items", identifier.make(name))
                         elif self.tokens.peek_token().word == "delete":
                             self.tokens.advance()
                             self.tokens.match(Operator("("))
-                            key = string_literal(self.tokens.peek_token().n)
+                            match self.tokens.peek_token():
+                                case Identifier(name2):
+                                    key = identifier.make(name2)
+                                case String(value):
+                                    key = string_literal(value)
+                                case Num(value):
+                                    key = numeric_literal(value)
                             self.tokens.advance()
                             self.tokens.match(Operator(")"))
                             self.tokens.match(Operator(";"))
-                            return b_dict_operation("delete", identifier(name), key)
+                            return b_dict_operation("delete", identifier.make(name), key)
                 return get(identifier.make(name))
 
             case Num(value):

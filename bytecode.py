@@ -254,7 +254,9 @@ class VM:
         #self.currentFrame = Frame()
 
     def execute(self) -> Value:
+
         while True:
+            print(self.data)
             assert self.ip < len(self.bytecode.insns)
             match self.bytecode.insns[self.ip]:
                 case I.PUSH(val):
@@ -468,7 +470,8 @@ class VM:
                     elif isinstance(data_structure, dict):
                         key = self.data.pop()
                         if key not in data_structure.keys():
-                            raise Exception("Key not found")
+                            # raise Exception("Key not found")
+                            self.data.append(-1)
                         self.data.append(data_structure[key])
                     else: 
                         raise Exception("Invalid type for lookup")
@@ -488,6 +491,7 @@ class VM:
                     else:
                         raise Exception("Invalid type for lookup")
                     self.ip += 1
+                    print(data_structure)
 
                 case I.HALT():
                     if(len(self.data)==0):
@@ -525,7 +529,6 @@ def do_codegen(
         "!=": I.NEQ(),
         "!": I.NOT()
     }
-
     match program:
         case numeric_literal(what) | bool_literal(what) | string_literal(what):
             code.emit(I.PUSH(what))
@@ -610,14 +613,14 @@ def do_codegen(
         #     code.emit(I.STORE(i.localID))
         #     codegen_(e2)
 
-        case get(identifier as i):
+        case get(i):
             code.emit(I.LOAD(i.id))
 
-        case set(identifier as i, e):
+        case set(i, e):
             codegen_(e)
             code.emit(I.STORE(i.id))
 
-        case declare(identifier as i, e):
+        case declare(i, e):
             codegen_(e)
             if isinstance(e, Lists):
                 code.emit(I.BUILD_LIST())
@@ -625,7 +628,7 @@ def do_codegen(
                 code.emit(I.BUILD_DICT())
             code.emit(I.STORE(i.id))
 
-        case declare_list(identifier as i, size, val):
+        case declare_list(i, size, val):
             codegen_(size)
             codegen_(val)
             code.emit(I.INIT_LIST())
@@ -659,15 +662,23 @@ def do_codegen(
         case length(x):
             codegen_(get(x))
             code.emit(I.LENGTH())
+       
         case find(x, index):
-            codegen_(index)
+            if isinstance(index, identifier):
+                codegen_(get(index))
+            else:
+                codegen_(index)
             codegen_(get(x))
             code.emit(I.FIND())
         case put(x, index, val):
             codegen_(val)
-            codegen_(index)
+            if isinstance(index, identifier):
+                codegen_(get(index))
+            else:
+                codegen_(index)
             codegen_(get(x))
             code.emit(I.PUT())
+            code.emit(I.STORE(x.id))
 
 
         # case (Variable() as v) | unary_operation("!", Variable() as v):

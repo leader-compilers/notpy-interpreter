@@ -282,6 +282,7 @@ class environment:
         for scope in reversed(self.scopes):
             if name in scope:
                 return scope[name]
+        print(name)
         raise Exception("Variable not defined")
 
     def update_scope(self, name, value):
@@ -370,6 +371,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             #     raise Exception("Variable not defined")
 
         case get(variable):
+            # print(variable.name)
             return name_space.get_from_scope(variable.name)
             # if variable.name in name_space:
             #     return name_space[variable.name]
@@ -591,18 +593,21 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         case find(first, second):
             data_structure = eval_ast(get(first), lexical_scope, name_space)
             if isinstance(data_structure, List):
+                
                 index = int(eval_ast(second, lexical_scope, name_space))
                 if(index > len(data_structure)):
                     raise Exception("Index out of bounds")
             elif isinstance(data_structure, dict):
                 index = eval_ast(second, lexical_scope, name_space)
                 if index not in data_structure:
-                    raise Exception("Key not in dictionary")
+                    # raise Exception("Key not in dictionary")
+                    return 0
             else: 
                 raise Exception("Type does not support lookup")
             return data_structure[index]
         case put(first, second, third):
             data_structure = eval_ast(get(first), lexical_scope, name_space)
+            # print(data_structure)
             if isinstance(data_structure, List):
                 index = int(eval_ast(second, lexical_scope, name_space))
                 if(index > len(data_structure)):
@@ -1024,8 +1029,8 @@ def test0():
 # test12()
 # test13()
 # test14()
-test15()
+# test15()
 # test16()
 #test17()
-test18()
-test19()
+# test18()
+# test19()
