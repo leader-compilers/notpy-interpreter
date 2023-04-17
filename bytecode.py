@@ -325,7 +325,7 @@ class VM:
                     #self.currentFrame.locals[localID] = v
                     self.ip += 1
                 case I.PRINT():
-                    print(self.data.pop())
+                    print(self.data.pop(), end=" ")
                     self.ip += 1
                 case I.STRCAT(size):
                     string = ""
@@ -468,7 +468,7 @@ def do_codegen(
             for exp in i.exps:
                 codegen_(exp)
                 code.emit(I.PRINT())
-
+            print()
         # case (Variable() as v) | unary_operation("!", Variable() as v):
         #     code.emit(I.LOAD(v.localID))
         # case Put(Variable() as v, e):
@@ -484,3 +484,15 @@ def do_codegen(
 
 def compile(program):
     return codegen(program)
+
+def print_bytecode(code: ByteCode):
+    for i, op in enumerate(code.insns):
+        match op:
+            case I.JMP(Label(offset)) | I.JMP_IF_TRUE(Label(offset)) | I.JMP_IF_FALSE(Label(offset)):
+                print(f"{i:=4} {op.__class__.__name__:<15} {offset}")
+            case I.LOAD(localID) | I.STORE(localID):
+                print(f"{i:=4} {op.__class__.__name__:<15} {localID}")
+            case I.PUSH(value):
+                print(f"{i:=4} {'PUSH':<15} {value}")
+            case _:
+                print(f"{i:=4} {op.__class__.__name__:<15}")

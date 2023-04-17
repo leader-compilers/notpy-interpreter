@@ -148,9 +148,6 @@ def test3_unaryOps():
     assert(v.execute() == 1)
 
 
-# test1_binOps()
-# test2_stringOps()
-# test3_unaryOps()
 
 
 def test4():
@@ -189,6 +186,36 @@ def test6():
     v.load(compile(ast))
     v.execute()
 
+def test4_print():
+    e1 = numeric_literal(1)
+    e2 = numeric_literal(2)
+    e3 = string_literal("Hello")
+    e4 = string_literal("World")
+    e5 = bool_literal(True)
+    e7 = binary_operation("+", e1, e2)
 
-test4()
-test6()
+    v = VM()
+    v.load(compile(print_statement([e1])))
+    v.execute()
+    v= VM()
+    v.load(compile(print_statement([e3])))
+    v.execute()
+    v = VM()
+    v.load(compile(print_statement([e7])))
+    v.execute()
+    v = VM()
+    v.load(compile(print_statement([e5])))
+    v.execute()
+    v = VM()
+    v.load(compile(print_statement([e1, e2, e3, e4, e5, e7])))
+    print_bytecode(compile(print_statement([e1, e2, e3, e4, e5, e7])))
+    v.execute()
+
+
+
+# test1_binOps()
+# test2_stringOps()
+# test3_unaryOps()
+# test4()
+test4_print()
+# test6()

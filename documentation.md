@@ -19,12 +19,13 @@ For defining the Context Free Grammar of our language we recognize the following
 |Symbol | Name|
 |:---|:---|
 |^   |    power|
-|-, !|    unary|
+|!|    unary|
+|// | floor|
 |/, * , % |  mult|
 |+, -   | add|
-|>, <, >=, <= | comp|
+|>, < | comp|
 |==, !=  | equality|
-|&&, \|\| |log-exp|
+|and, or |log-exp|
 |||
 
 
@@ -32,19 +33,24 @@ We have defined the CFG as follows:
 
 
 ```
-expr —> log-exp | List | print | while | if | for
-while —> "while" expr "do" expr "end"
-if —> "if" expr "then" expr "else" expr "end"
-for —> "for" expr ";" expr ";" expr "do" expr "end"
-print —> "print" expr ";"
-List —> "List" expr ";"
-log-exp —> equality(&&,||)log-exp | equality
+expr —> log-exp | List | print | while | if | for | let | pass | def | var | 
+while —> "while" "(" expr; ")" "{" (expr;)* "}" 
+if —> "if" "(" expr ")" "{" (expr;)* "}" "else" "{" (expr;)* "}" | "if" "(" expr ")" "{" (expr;)* "}"
+for —> "for" (expr ";" expr ";" expr) { (expr;)* }
+print —> "print" (expr)* ";"
+List —> "List" (expr)* ";"
+let -> "let" name "=" expr "in" expr ";"
+var -> "var" name "=" exp;
+pass -> "pass;"
+def -> "def" name "(" (expr;)* ")" "{" (expr;)* "return" expr ";" "}"
+log-exp —> equality(and, or)log-exp | equality
 equality —> comp(==,!=)comp | comp
-comp —> add(>, <, >=, <=)add | add
+comp —> add(>, <)add | add
 add —> mult(+, -)add | mult
-mult —> mult(/,*)unary | unary
-unary —> (!,-)unary | power
-power —> power(^)primary | primary
+mult —> mult(/,*)floor | floor
+floor -> unary(//)floor | unary
+unary —> (!)unary | power
+power —> power(^)primary | power(**)primary | primary
 primary —> Num | Bool | Keyword | Identifier | Operator | EndOfLine | String
 ```
 
