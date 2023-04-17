@@ -22,6 +22,66 @@ class Parser:
                     case Operator(op) if op in "=":
                         self.tokens.advance()
                         return self.parse_set(name)
+                    case Operator(op) if op in "[":
+                        self.tokens.advance()
+                        match self.tokens.peek_token():
+                            case Identifier(name2):
+                                a = identifier(name2)
+                            case String(value):
+                                a = string_literal(value)
+                            case Num(value):
+                                a = numeric_literal(value)
+                        self.tokens.advance()
+                        self.tokens.match(Operator("]"))
+                        match self.tokens.peek_token():
+                            case Operator(op) if op in "=":
+                                self.tokens.advance()
+                                val = numeric_literal(self.tokens.peek_token().n)
+                                self.tokens.advance()
+                                self.tokens.match(Operator(";"))
+                                return put(identifier(name), a, val)
+                        return find(identifier(name), a)
+                    
+                    case Operator(op) if op in ".":
+                        self.tokens.advance()
+                        if self.tokens.peek_token().word == "head":
+                            self.tokens.advance()
+                            return u_list_operation("head", identifier(name))
+                        elif self.tokens.peek_token().word == "tail":
+                            self.tokens.advance()
+                            return u_list_operation("tail", identifier(name))
+                        elif self.tokens.peek_token().word == "empty":
+                            self.tokens.advance()
+                            return u_list_operation("is_empty", identifier(name))
+                        elif self.tokens.peek_token().word == "cons":
+                            self.tokens.advance()
+                            self.tokens.match(Operator("("))
+                            a = numeric_literal(self.tokens.peek_token().n)
+                            self.tokens.advance()
+                            self.tokens.match(Operator(")"))
+                            self.tokens.match(Operator(";"))
+                            return b_list_operation("cons", a, identifier(name))
+                        elif self.tokens.peek_token().word == "length":
+                            self.tokens.advance()
+                            return length("length")
+                        
+                        elif self.tokens.peek_token().word == "keys":
+                            self.tokens.advance()
+                            return u_dict_operation("keys", identifier(name))
+                        elif self.tokens.peek_token().word == "values": 
+                            self.tokens.advance()
+                            return u_dict_operation("values", identifier(name))
+                        elif self.tokens.peek_token().word == "items":
+                            self.tokens.advance()
+                            return u_dict_operation("items", identifier(name))
+                        elif self.tokens.peek_token().word == "delete":
+                            self.tokens.advance()
+                            self.tokens.match(Operator("("))
+                            key = string_literal(self.tokens.peek_token().n)
+                            self.tokens.advance()
+                            self.tokens.match(Operator(")"))
+                            self.tokens.match(Operator(";"))
+                            return b_dict_operation("delete", identifier(name), key)
                 return get(identifier(name))
 
             case Num(value):
@@ -152,7 +212,6 @@ class Parser:
                 self.tokens.advance()
             # case _:
             #     raise Exception("Expected { at the start  of the program")
-            
         while True:
             match self.tokens.peek_token():
    
@@ -205,9 +264,9 @@ class Parser:
                     b.append(tree)
                     match self.tokens.peek_token():
                         case Operator(op) if op in ";":
-                            return tree
+                            return b[0]
                         case Operator(op) if op in ")":
-                            return tree
+                            return b[0]
                     # print(self.tokens.peek_token())
                     
     def parse_expr_key(self):
@@ -243,10 +302,13 @@ class Parser:
                     self.tokens.match(Operator(";"))
                     return b
 
-                case Keyword("List"):
+                case Operator("["):
                     b.append(self.parse_List())
-                    self.tokens.match(Operator(";"))
-                    return b
+                    return b[0]
+                
+                case Operator("{"):
+                    b.append(self.parse_dict())
+                    return b[0]
 
                 case Keyword("var"):
                     b.append(self.parse_declare())
@@ -601,18 +663,40 @@ class Parser:
                     break
             self.tokens.match(Operator(","))
         return print_statement(exprs)
-
+    
     def parse_List(self):
-        self.tokens.match(Keyword("List"))
+        self.tokens.match(Operator("["))
         values = []
         while True:
-            values.append(self.parse_expr())
+            values.append(self.parse_logic())
             match self.tokens.peek_token():
-                case Operator(op) if op in ";":
+                case Operator(op) if op in "]":
                     break
             self.tokens.match(Operator(","))
+        self.tokens.match(Operator("]"))
         return Lists(values)
-
+    
+    def parse_dict(self):
+        self.tokens.match(Operator("{"))
+        self.tokens.match(Operator("{"))
+        values = []
+        keys = []
+        dicto = []
+        i = 0
+        while True:
+            keys.append(self.parse_logic())
+            self.tokens.match(Operator(":"))
+            values.append(self.parse_logic())
+            dicto.append((keys[i],values[i]))
+            match self.tokens.peek_token():
+                case Operator(op) if op in "}":
+                    break
+            self.tokens.match(Operator(","))
+            i+=1
+        self.tokens.match(Operator("}"))
+        self.tokens.match(Operator("}"))
+        return dict_literal(dicto)
+    
     def parse_let(self):
         self.tokens.match(Keyword("let"))
         name = self.tokens.peek_token()
@@ -780,6 +864,100 @@ def test_parse13():
         )
     print(parse("{while (i<30){if(j%10==0){i=i+1;} else {i=i+2;} j = i+j;}}"))
 
+def test_parse14():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("var a  = [1,2,3];"))
+
+def test_parse15():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("a.head;"))
+
+def test_parse16():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("a.tail;"))
+
+def test_parse17():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("a.empty;"))
+
+def test_parse18():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("a.cons(1);"))
+
+def test_parse19():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("a.length;"))
+
+def test_parse20():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("a[9] = 1;"))
+
+def test_parse21():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    print(parse("a[9];"))
+
+
+def test_parse22():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = '''var a  = {{1:2, 7:3, 8:0}};'''
+    # string = repr(string)
+    print(parse(string))
+
+def test_parse23():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "a.delete(2);"
+    # string = repr(string)
+    print(parse(string))
+
+def test_parse24():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "a.items;"
+    # string = repr(string)
+    print(parse(string))
 # test_parse0()
 # test_parse1()
 # test_parse2()
@@ -794,3 +972,14 @@ def test_parse13():
 # test_parse11()
 # test_parse12()
 # test_parse13()
+# test_parse14()
+# test_parse15()
+# test_parse16()
+# test_parse17()
+# test_parse18()
+# test_parse19()
+# test_parse20()
+# test_parse21()
+# test_parse22()
+# test_parse23()
+# test_parse24()

@@ -135,6 +135,116 @@ def test3_unaryOps():
     assert(v.execute() == 1)
 
 
-test1_binOps()
-test2_stringOps()
-test3_unaryOps()
+def test4_IfElse():
+    e1 = numeric_literal(4)
+    e2 = numeric_literal(5)
+    condition = binary_operation("<", e1, e2)
+    if_exp = numeric_literal(40)
+    else_exp = numeric_literal(50)
+    e = if_statement(condition, if_exp, else_exp)
+    v = VM()
+    v.load(compile(e))
+    assert v.execute() == 40
+
+    e1 = numeric_literal(7)
+    e2 = numeric_literal(5)
+    condition = binary_operation("<", e1, e2)
+    if_exp = numeric_literal(40)
+    else_exp = numeric_literal(50)
+    e = if_statement(condition, if_exp, else_exp)
+    v.load(compile(e))
+    assert v.execute() == 50
+
+    #nested if else
+    e1 = numeric_literal(1)
+    e2 = numeric_literal(15)
+    condition = binary_operation("<", e1, e2)
+    e3 = numeric_literal(7)
+    e4 = numeric_literal(5)
+    condition2 = binary_operation("<", e3, e4)
+    if_exp = if_statement(condition2, numeric_literal(90), numeric_literal(150))
+    else_exp = numeric_literal(7)
+    e = if_statement(condition, if_exp, else_exp)
+    v.load(compile(e))
+    assert v.execute() == 150
+
+    e1 = numeric_literal(7)
+    e2 = numeric_literal(5)
+    e3 = numeric_literal(1)
+    e4 = numeric_literal(15)
+    e5 = binary_operation("+", e1, e3)
+    e6 = binary_operation("+", e2, e4)
+    condition = binary_operation("==", e5, e6)
+    if_exp = numeric_literal(1)
+    else_exp = numeric_literal(0)
+    e = if_statement(condition, if_exp, else_exp)
+    v.load(compile(e))
+    assert v.execute() == 0
+
+    e1 = numeric_literal(7)
+    e2 = numeric_literal(5)
+    e3 = numeric_literal(1)
+    e4 = numeric_literal(15)
+    e5 = binary_operation("+", e1, e3)
+    e6 = binary_operation("+", e2, e4)
+    condition = binary_operation("<", e5, e6)
+    if_exp = numeric_literal(1)
+    else_exp = numeric_literal(0)
+    e = if_statement(condition, if_exp, else_exp)
+    v.load(compile(e))
+    assert v.execute() == 1
+
+    e1 = bool_literal(False)
+    e2 = bool_literal(True)
+    condition = binary_operation("==", e1, e2)
+    if_exp = bool_literal(True)
+    else_exp = bool_literal(False)
+    e = if_statement(condition, if_exp, else_exp)
+    v.load(compile(e))
+    assert v.execute() == False
+
+
+def test5_while():
+    e1 = numeric_literal(0)
+    e2 = numeric_literal(10)
+    condition = binary_operation("<", e1, e2)
+    e3 = numeric_literal(1)
+    e1 = binary_operation("+", e1, e3)
+    body = block([e3, e1])
+    e = while_loop(condition, body)
+    v = VM()
+    v.load(compile(e))
+    assert v.execute() == 10
+
+
+    # e1 = numeric_literal(0)
+    # e2 = numeric_literal(10)
+    # condition = binary_operation("<", e1, e2)
+    # e3 = numeric_literal(1)
+    # e4 = binary_operation("+", e1, e3)
+    # e5 = numeric_literal(2)
+    # e6 = binary_operation("+", e1, e5)
+    # e7 = binary_operation("+", e4, e6)
+    # e = while_loop(condition, e7)
+    # v.load(compile(e))
+    # assert v.execute() == 55
+
+    # e1 = numeric_literal(0)
+    # e2 = numeric_literal(10)
+    # condition = binary_operation("<", e1, e2)
+    # e3 = numeric_literal(1)
+    # e4 = binary_operation("+", e1, e3)
+    # e5 = numeric_literal(2)
+    # e6 = binary_operation("+", e1, e5)
+    # e7 = binary_operation("+", e4, e6)
+    # e8 = numeric_literal(3)
+    # e9 = binary_operation("+", e7, e8)
+    # e = while_loop(condition, e9)
+    # v.load(compile(e))
+    # assert v.execute() == 58
+
+# test1_binOps()
+# test2_stringOps()
+# test3_unaryOps()
+test4_IfElse()
+# test5_while()
