@@ -402,10 +402,10 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         case string_literal(value):
             return value
         case Lists(value):
-            output_list = []
-            for i in range(len(value)):
-                output_list.append(
-                    eval_ast(value[i], lexical_scope, name_space))
+            output_list = [0 for i in range (int(eval_ast(value[0], lexical_scope, name_space)))]
+            # for i in range(len(value)):
+            #     output_list.append(
+            #         eval_ast(value[i], lexical_scope, name_space))
             return output_list
         case dict_literal(value):
             output_dict = {}

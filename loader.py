@@ -4,7 +4,7 @@ import eval as e
 import typechecking as t
 import resolver as r
 from bytecode import *
-
+import time
 def main(filename):
     with open(filename) as f:
         code = f.read()
@@ -22,5 +22,7 @@ def main(filename):
     # v.execute()
     print(ast)
     output = e.eval_ast(ast)
+    end=time.time()
+    print(end-start)
 
 main("test.txt")
