@@ -15,12 +15,12 @@ def main(filename):
     ast = p.Parser.parse_expr(parse)
     
     # resolvedast = r.resolve(ast)
-    #print(resolvedast)
+    # print(ast)
     # v = VM()
     # v.load(compile(resolvedast))
     # print(v.bytecode.insns)
     # v.execute()
-    # print(ast)
+    print(ast)
     output = e.eval_ast(ast)
 
-main("euler14.txt")
+main("test.txt")

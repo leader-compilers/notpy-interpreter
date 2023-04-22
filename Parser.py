@@ -77,7 +77,7 @@ class Parser:
                             return b_list_operation("cons", a, identifier.make(name))
                         elif self.tokens.peek_token().word == "length":
                             self.tokens.advance()
-                            return length("length")
+                            return length(identifier.make(name))
                         
                         elif self.tokens.peek_token().word == "keys":
                             self.tokens.advance()
@@ -263,8 +263,8 @@ class Parser:
                     b.append(self.parse_print())
                     self.tokens.match(Operator(";"))
 
-                case Keyword("List"):
-                    b.append(self.parse_List())
+                case Keyword("list"):
+                    b.append(self.parse_list_initialize())
                     self.tokens.match(Operator(";"))
 
                 case Keyword("var"):
@@ -290,6 +290,7 @@ class Parser:
     def parse_expr_key(self):
         b = []
         while True:
+            # print(self.tokens.peek_token())
             match self.tokens.peek_token():
                 case EndOfLine(EOL) if EOL in "EndOfLine":
                     return b
@@ -332,6 +333,10 @@ class Parser:
                     b.append(self.parse_declare())
                     self.tokens.match(Operator(";"))
                     return b
+                
+                case Keyword("list"):
+                    b.append(self.parse_list_initialize())
+                    return b[0]
 
                 case functionName(name):
                     b.append(self.parse_function_call())
@@ -379,14 +384,22 @@ class Parser:
                     b.append(self.parse_print())
                     self.tokens.match(Operator(";"))
 
-                case Keyword("List"):
-                    b.append(self.parse_List())
+                case Keyword("list"):
+                    b.append(self.parse_list_initialize())
                     self.tokens.match(Operator(";"))
 
                 case Keyword("var"):
                     b.append(self.parse_declare())
                     self.tokens.match(Operator(";"))
 
+                case Operator("["):
+                    b.append(self.parse_List())
+                    self.tokens.match(Operator(";"))
+                
+                case Operator("{"):
+                    b.append(self.parse_dict())
+                    self.tokens.match(Operator(";"))
+                
                 case functionName(name):
                     b.append(self.parse_function_call())
                     match self.tokens.peek_token():
@@ -434,12 +447,20 @@ class Parser:
                     b.append(self.parse_print())
                     self.tokens.match(Operator(";"))
 
-                case Keyword("List"):
-                    b.append(self.parse_List())
+                case Keyword("list"):
+                    b.append(self.parse_list_initialize())
                     self.tokens.match(Operator(";"))
 
                 case Keyword("var"):
                     b.append(self.parse_declare())
+                    self.tokens.match(Operator(";"))
+
+                case Operator("["):
+                    b.append(self.parse_List())
+                    self.tokens.match(Operator(";"))
+                
+                case Operator("{"):
+                    b.append(self.parse_dict())
                     self.tokens.match(Operator(";"))
 
                 case functionName(name):
@@ -681,6 +702,19 @@ class Parser:
             self.tokens.match(Operator(","))
         return print_statement(exprs)
     
+    def parse_list_initialize(self):
+        self.tokens.match(Keyword("list"))
+        self.tokens.match(Operator("("))
+        exprs = []
+        while True:
+            exprs.append(self.parse_logic())
+            match self.tokens.peek_token():
+                case Operator(op) if op in ")":
+                    break
+            self.tokens.match(Operator(","))
+        self.tokens.match(Operator(")"))
+        return list_initializer(exprs[0], exprs[1])
+
     def parse_List(self):
         self.tokens.match(Operator("["))
         values = []
@@ -978,6 +1012,37 @@ def test_parse24():
     string = "a.items;"
     # string = repr(string)
     print(parse(string))
+
+def test_parse25():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "var t = list(1,2);"
+    # string = repr(string)
+    print(parse(string))
+
+def test_parse26():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "for(i=0; i<8; i=i+1) { var c = list(1,2); var j = [0, 1, 2]; }"
+    # string = repr(string)
+    print(parse(string))
+
+def test_parse27():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "def fun(i){ var c = list(1,2); var j = [0, 1, 2]; return i; }"
+    # string = repr(string)
+    print(parse(string))
+
 # test_parse0()
 # test_parse1()
 # test_parse2()
@@ -1003,3 +1068,4 @@ def test_parse24():
 # test_parse22()
 # test_parse23()
 # test_parse24()
+test_parse27()

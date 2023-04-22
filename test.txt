@@ -1,10 +1,17 @@
 
     var a = [10, 11, 22];
     var r =0;
-   
 
     r=1;
     a[0]=0;
     a.cons(9);
-    
+    print r;
+    print a.length;
+    a[1]=69;
+    for (i=0; i<a.length; i=i+1){
+        print a[i];
+    }
 
+    print "head: ", a.head;
+    print "tail: ", a.tail;
+    print a.empty;
