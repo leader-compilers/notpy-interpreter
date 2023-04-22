@@ -132,12 +132,14 @@ class put:
 
 @dataclass
 class string_concat:
+    operator: str
     operands: List["AST"]
     type: StringType = StringType()
 
 
 @dataclass
 class string_slice:
+    opeartor: str
     string: "AST"
     start: "AST"
     stop: "AST"

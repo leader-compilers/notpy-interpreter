@@ -670,6 +670,104 @@ def do_codegen(
             code.emit(I.PUT())
 
 
+        # case identifier(name) as i:
+        #     code.emit(I.LOAD(i.id))
+
+        # recheck below cases
+        case let_var() as i:
+            code.emit(I.LOAD(i.id))
+        # case let(let_var as i, e1, e2):
+        #     codegen_(e1)
+        #     code.emit(I.STORE(i.localID))
+        #     codegen_(e2)
+
+        case get(identifier as i):
+            code.emit(I.LOAD(i.id))
+
+        case set(identifier as i, e):
+            codegen_(e)
+            code.emit(I.STORE(i.id))
+
+        case declare(identifier as i, e):
+            codegen_(e)
+            if isinstance(e, Lists):
+                code.emit(I.BUILD_LIST())
+            elif isinstance(e, dict_literal):
+                code.emit(I.BUILD_DICT())
+            code.emit(I.STORE(i.id))
+
+        case declare_list(identifier as i, size, val):
+            codegen_(size)
+            codegen_(val)
+            code.emit(I.INIT_LIST())
+            code.emit(I.STORE(i.id))
+
+        case print_statement() as i:
+            for exp in i.exps:
+                codegen_(exp)
+                code.emit(I.PRINT())
+
+        # case u_list_operation("head", list):
+        #     codegen_(get(list))
+        #     code.emit(I.LIST_HEAD())
+
+
+        case u_dict_operation("keys", dict):
+            codegen_(get(dict))
+            code.emit(I.DICT_KEYS())
+        case u_dict_operation("values", dict):
+            codegen_(get(dict))
+            code.emit(I.DICT_VALUES())
+        case u_dict_operation("items", dict):
+            codegen_(get(dict))
+            code.emit(I.DICT_ITEMS())
+        case b_dict_operation("delete", dict, key):
+            codegen_(get(dict))
+            codegen_(key)
+            code.emit(I.DICT_DELETE())
+            code.emit(I.STORE(dict.id))
+
+        case length(x):
+            codegen_(get(x))
+            code.emit(I.LENGTH())
+        case find(x, index):
+            codegen_(index)
+            codegen_(get(x))
+            code.emit(I.FIND())
+        case put(x, index, val):
+            codegen_(val)
+            codegen_(index)
+            codegen_(get(x))
+            code.emit(I.PUT())
+
+
+        # case identifier(name) as i:
+        #     code.emit(I.LOAD(i.id))
+
+        # recheck below cases
+        case let_var() as i:
+            code.emit(I.LOAD(i.id))
+        # case let(let_var as i, e1, e2):
+        #     codegen_(e1)
+        #     code.emit(I.STORE(i.localID))
+        #     codegen_(e2)
+
+        case get(identifier as i):
+            code.emit(I.LOAD(i.id))
+
+        case set(identifier as i, e):
+            codegen_(e)
+            code.emit(I.STORE(i.id))
+
+        case declare(identifier as i, e):
+            codegen_(e)
+            code.emit(I.STORE(i.id))
+
+        case print_statement() as i:
+            for exp in i.exps:
+                codegen_(exp)
+                code.emit(I.PRINT())
+            print()
         # case (Variable() as v) | unary_operation("!", Variable() as v):
         #     code.emit(I.LOAD(v.localID))
         # case Put(Variable() as v, e):
@@ -685,3 +783,15 @@ def do_codegen(
 
 def compile(program):
     return codegen(program)
+
+def print_bytecode(code: ByteCode):
+    for i, op in enumerate(code.insns):
+        match op:
+            case I.JMP(Label(offset)) | I.JMP_IF_TRUE(Label(offset)) | I.JMP_IF_FALSE(Label(offset)):
+                print(f"{i:=4} {op.__class__.__name__:<15} {offset}")
+            case I.LOAD(localID) | I.STORE(localID):
+                print(f"{i:=4} {op.__class__.__name__:<15} {localID}")
+            case I.PUSH(value):
+                print(f"{i:=4} {'PUSH':<15} {value}")
+            case _:
+                print(f"{i:=4} {op.__class__.__name__:<15}")
