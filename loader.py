@@ -22,7 +22,7 @@ def main(filename):
     # v.execute()
     print(ast)
     output = e.eval_ast(ast)
-    end=time.time()
-    print(end-start)
+    # end=time.time()
+    # print(end-start)
 
-main("test.txt")
+main("test_dict.txt")
