@@ -24,14 +24,7 @@ class Parser:
                         return self.parse_set(name)
                     case Operator(op) if op in "[":
                         self.tokens.advance()
-                        match self.tokens.peek_token():
-                            case Identifier(name2):
-                                a = identifier.make(name2)
-                            case String(value):
-                                a = string_literal(value)
-                            case Num(value):
-                                a = numeric_literal(value)
-                        self.tokens.advance()
+                        a = self.parse_logic()
                         self.tokens.match(Operator("]"))
                         match self.tokens.peek_token():
                             case Operator(op) if op in "=":
@@ -1070,6 +1063,16 @@ def test_parse28():
     # string = repr(string)
     print(parse(string))
 
+def test_parse29():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "{ var e = a[c-1];}"
+    # string = repr(string)
+    print(parse(string))
+    
 # test_parse0()
 # test_parse1()
 # test_parse2()
@@ -1096,3 +1099,4 @@ def test_parse28():
 # test_parse23()
 # test_parse24()
 # test_parse28()
+# test_parse29()
