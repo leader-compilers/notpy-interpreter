@@ -175,7 +175,10 @@ class Parser:
                 case Operator(op) if op in "+-":
                     self.tokens.advance()
                     m = self.parse_add()
-                    left = binary_operation(op, left, m)
+                    if left == None:
+                        left = unary_operation(op, m)
+                    else:
+                        left = binary_operation(op, left, m)
                 case _:
                     break
         return left
@@ -841,7 +844,7 @@ def test_parse5():
     # print(parse("var a = 2;"))
     # You should parse, evaluate and see whether the expression produces the expected value in your tests.
     # print(eval_ast(parse("var a = 2+3;;"),None, None))
-    print(parse("{var a = 2+3; r = 2;}"))
+    print(parse("{var a = 2+3; r = -1;}"))
 
 
 def test_parse6():
