@@ -79,11 +79,11 @@ def test1_binOps():
 
 def test2_stringOps():
     # CONCAT
+    v = VM()
     e1 = []
     for i in range(4):
         e1.append(string_literal(str(i)))
     e2 = string_concat(e1)
-    v = VM()
     v.load(compile(e2))
     assert(v.execute() == "0123")
 
@@ -112,6 +112,31 @@ def test2_stringOps():
     e4 = string_slice(e1, four, zero, minusone)
     v.load(compile(e4))
     assert(v.execute() == "olle")
+
+    #E LENGTH
+    s = identifier("s", 0)
+    e1 = string_literal("Hello World")
+    v.load(compile(declare(s, e1)))
+    v.execute()
+    i = identifier("i", 1)
+    v.load(compile(declare(i, numeric_literal(1))))
+    v.execute()
+    v.load(compile(length(e1)))
+    assert(v.execute() == 11)
+    
+    ## FIND
+    v.load(compile(find(e1, get(i))))
+    assert(v.execute() == "e")
+    v.load(compile(find(get(s), get(i),)))
+    assert(v.execute() == "e")
+
+    ## PUT
+    v.load(compile(put(e1, get(i), string_literal("a")))) # i = 1
+    assert(v.execute() == "Hallo World")
+    v.load(compile(put(get(s), get(i), string_literal("a")))) # s = "Hello World"
+    v.execute()
+    v.load(compile(get(s)))
+    assert(v.execute() == "Hallo World")
 
 def test3_unaryOps():
     e1 = numeric_literal(1)
@@ -314,7 +339,7 @@ def test7_listOps():
     ## Tests for put using a list via an identifier without and with an identifier as the index/value
     e11 = put(get(x), numeric_literal(2), numeric_literal(4)) # x = [0, 1, 2, 3, 4]
     v.load(compile(e11))
-    assert(v.execute() == [0, 1, 4, 3, 4])
+    v.execute() == [0, 1, 4, 3, 4]
     v.load(compile(get(x)))
     assert(v.execute() == [0, 1, 4, 3, 4])
 

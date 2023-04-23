@@ -214,6 +214,11 @@ class update_dict:
     value: dict
     # type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
+@dataclass
+class update_string:
+    variable: identifier
+    value: str
+
 # If Expressions
 
 
@@ -387,6 +392,9 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         case update_dict(variable, value):
             name_space.update_scope(variable.name, value)
             return Fraction(0)
+        case update_string(e, value):
+            name_space.update_scope(e.variable.name, value)
+            return Fraction(0)
 
         # Literals
         case numeric_literal(value):
@@ -492,6 +500,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             step = int(eval_ast(hop))
             final_string = eval_ast(string, lexical_scope, name_space)
             # Doing the appropriate slicing using python's inbuilt slicing method
+            if(end == -1):
+                return str(final_string[begin::step])
             return str(final_string[begin:end:step])
 
         # For loops
@@ -597,7 +607,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
         
         case length(first):
             data_structure = eval_ast(first, lexical_scope, name_space)
-            if isinstance(data_structure, list) or isinstance(data_structure, dict):
+            if isinstance(data_structure, list | dict | str):
                 return len(data_structure)
             else:
                 raise Exception("Invalid type for length")
@@ -605,7 +615,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
             data_structure = eval_ast(first, lexical_scope, name_space)
             index = eval_ast(second, lexical_scope, name_space)
             ## Checking type of the datastructure
-            if isinstance(data_structure, list):
+            if isinstance(data_structure, list | str):
                 index = int(index)
                 if(index >= len(data_structure)):
                     raise Exception("Index out of bounds")
@@ -636,6 +646,15 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 ## Might not be necessary
                 # eval_ast(update_dict(first, data_structure), lexical_scope, name_space)
                 return data_structure
+            elif isinstance(data_structure, str):
+                index = int(eval_ast(second, lexical_scope, name_space))
+                if(index >= len(data_structure)):
+                    raise Exception("Index out of bounds")
+                value = eval_ast(third, lexical_scope, name_space)
+                data_structure = data_structure[:index] + value + data_structure[index+1:]
+                if(isinstance(first, get)):
+                    eval_ast(update_string(first, data_structure), lexical_scope, name_space)
+                return data_structure
             else: 
                 raise Exception("Type does not support lookup")
                 
@@ -647,6 +666,33 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 # Tests
 
 # basic arithmetic
+
+def test_string():
+    name_space = environment()
+    e = string_literal("")
+    assert(eval_ast(e, None, name_space) == "")
+
+    e1 = string_literal("hello")
+    s = identifier.make("s")
+    eval_ast(declare(s, e1), None, name_space)
+    i  = identifier.make("i")
+    eval_ast(declare(i, numeric_literal(1)), None, name_space)
+
+    assert(eval_ast(s, None, name_space) == "hello")
+    assert(eval_ast(get(s), None, name_space) == "hello")
+    assert(eval_ast(length(s), None, name_space) == 5)
+    assert(eval_ast(find(s, i), None, name_space) == "e") # i = 1
+    assert(eval_ast(put(get(s), i, string_literal("z")), None, name_space) == "hzllo")
+    assert(eval_ast(s, None, name_space) == "hzllo")
+    assert(eval_ast(put(string_literal("world"), i, string_literal("z")), None, name_space) == "wzrld")
+
+    assert(eval_ast(string_concat([s, string_literal(" world")]), None, name_space) == "hzllo world")
+    assert(eval_ast(string_slice(s, numeric_literal(1), numeric_literal(3)), None, name_space) == "zl")
+    assert(eval_ast(string_slice(s, numeric_literal(0), numeric_literal(5), numeric_literal(2)), None, name_space) == "hlo")
+    assert(eval_ast(string_slice(s, numeric_literal(5), numeric_literal(-1), numeric_literal(-1)), None, name_space) == "ollzh")
+
+test_string()
+
 
 def test_dict():
     name_space = environment()

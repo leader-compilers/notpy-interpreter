@@ -493,14 +493,14 @@ class VM:
 
                 case I.LENGTH():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, list) or isinstance(data_structure, dict):
+                    if isinstance(data_structure, list | dict | str):
                         self.data.append(len(data_structure))
                     else:
                         raise Exception("Invalid type for length")
                     self.ip += 1
                 case I.FIND():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, list):
+                    if isinstance(data_structure, list | str):
                         index = int(self.data.pop())
                         if(index > len(data_structure)):
                             raise Exception("Index out of bounds")
@@ -520,11 +520,17 @@ class VM:
                         if(index > len(data_structure)):
                             raise Exception("Index out of bounds")
                         data_structure[index] = self.data.pop()
-                        # self.data.append(data_structure)
+                        self.data.append(data_structure)
                     elif isinstance(data_structure, dict):
                         key = self.data.pop()
                         data_structure[key] = self.data.pop()
-                        # self.data.append(data_structure)
+                        self.data.append(data_structure)
+                    elif isinstance(data_structure, str):
+                        index = int(self.data.pop())
+                        if(index > len(data_structure)):
+                            raise Exception("Index out of bounds")
+                        data_structure = data_structure[:index] + self.data.pop() + data_structure[index+1:]
+                        self.data.append(data_structure)
                     else:
                         raise Exception("Invalid type for lookup")
                     self.ip += 1
@@ -580,6 +586,9 @@ def do_codegen(
                 codegen_(i[1])
             code.emit(I.PUSH(len(what)))
             code.emit(I.BUILD_DICT())
+        case update_string(e, what):
+            code.emit(I.PUSH(what))
+            code.emit(I.STORE(e.variable.name))
         # case UnitLiteral():
         #     code.emit(I.PUSH(None))
         case binary_operation(op, left, right) if op in simple_ops:
@@ -722,6 +731,12 @@ def do_codegen(
             codegen_(index)
             codegen_(x)
             code.emit(I.PUT())
+            if(isinstance(x, get)):
+               code.emit(I.STORE(x.variable.id))
+            ## This does not make sense as we only execute our AST once, so 
+            ## we won't have the value of x in the global environment
+            # if(isinstance(x, get) and isinstance(global_environment[x.variable.id], str)):
+            #     code.emit(I.STORE(x.variable.id))
 
 
         # case (Variable() as v) | unary_operation("!", Variable() as v):
