@@ -1,24 +1,27 @@
 {
-    def comb(n,r){
+    def factorial(n){
         var ans = -1;
-        if(r==0){
+        if(n==1){
             ans = 1;
-        }
-        var num = 1;
-        for(i=n-r+1;i<n+1;i=i+1){
-            num = num * i;
-        }
-        var den = 1;
-        for(i=1;i<r+1;i=i+1){
-            den = den * i;
         }
 
         if (ans == -1){
-            ans = num // den;
+            ans = n * factorial(n-1);
+        }
+        return ans;
+    }
+    def sumDigits(n){
+      var ans = -2;
+        if(n<10){
+            ans = n;
         }
 
+        if (ans != -2){
+            ans = n%10 + sumDigits(n//10);
+        }
         return ans;
     }
 
-    print comb(40,20);
+    var ans2 = sumDigits(factorial(100));
+    print ans2;
 }

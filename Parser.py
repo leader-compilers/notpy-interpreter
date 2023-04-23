@@ -35,29 +35,29 @@ class Parser:
                                     case String(value):
                                         val = string_literal(value)
                                     case Identifier(name2):
-                                        val = identifier.make(name2)
+                                        val = get(identifier.make(name2))
                                 self.tokens.advance()
                                 self.tokens.match(Operator(";"))
-                                return put(identifier.make(name), a, val)
-                        return find(identifier.make(name), a)
+                                return put(get(identifier.make(name)), a, val)
+                        return find(get(identifier.make(name)), a)
                     
                     case Operator(op) if op in ".":
                         self.tokens.advance()
                         if self.tokens.peek_token().word == "head":
                             self.tokens.advance()
-                            return u_list_operation("head", identifier.make(name))
+                            return u_list_operation("head", get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "tail":
                             self.tokens.advance()
-                            return u_list_operation("tail", identifier.make(name))
+                            return u_list_operation("tail", get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "empty":
                             self.tokens.advance()
-                            return u_list_operation("is_empty", identifier.make(name))
+                            return u_list_operation("is_empty", get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "cons":
                             self.tokens.advance()
                             self.tokens.match(Operator("("))
                             match self.tokens.peek_token():
                                 case Identifier(name2):
-                                    a = identifier.make(name2)
+                                    a = get(identifier.make(name2))
                                 case String(value):
                                     a = string_literal(value)
                                 case Num(value):
@@ -70,13 +70,13 @@ class Parser:
                             return b_list_operation("cons", a, get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "length":
                             self.tokens.advance()
-                            return length(identifier.make(name))
+                            return length(get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "append":
                             self.tokens.advance()
                             self.tokens.match(Operator("("))
                             match self.tokens.peek_token():
                                 case Identifier(name2):
-                                    a = identifier.make(name2)
+                                    a = get(identifier.make(name2))
                                 case String(value):
                                     a = string_literal(value)
                                 case Num(value):
@@ -90,19 +90,19 @@ class Parser:
                         
                         elif self.tokens.peek_token().word == "keys":
                             self.tokens.advance()
-                            return u_dict_operation("keys", identifier.make(name))
+                            return u_dict_operation("keys", get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "values": 
                             self.tokens.advance()
-                            return u_dict_operation("values", identifier.make(name))
+                            return u_dict_operation("values", get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "items":
                             self.tokens.advance()
-                            return u_dict_operation("items", identifier.make(name))
+                            return u_dict_operation("items", get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "delete":
                             self.tokens.advance()
                             self.tokens.match(Operator("("))
                             match self.tokens.peek_token():
                                 case Identifier(name2):
-                                    key = identifier.make(name2)
+                                    key = get(identifier.make(name2))
                                 case String(value):
                                     key = string_literal(value)
                                 case Num(value):
@@ -493,40 +493,19 @@ class Parser:
                     case Operator("("):
                         self.tokens.advance()
                         parameters = []
-
-                        while self.tokens.peek_token() is not None:
-
-                            if isinstance(self.tokens.peek_token(), Identifier) or isinstance(self.tokens.peek_token(), Num) or isinstance(self.tokens.peek_token(), String):
-                                if isinstance(self.tokens.peek_token(), Identifier):
-                                    word = self.tokens.peek_token().word
-                                    parameters.append(identifier.make(word))
-                                elif isinstance(self.tokens.peek_token(), Num):
-                                    word = self.tokens.peek_token().n
-                                    parameters.append(numeric_literal(word))
-                                elif isinstance(self.tokens.peek_token(), String):
-                                    word = self.tokens.peek_token().s
-                                    parameters.append(string_literal(word))
-                                else:
-                                    parameters.append(self.tokens.peek_token())
-                                self.tokens.advance()
-                                if isinstance(self.tokens.peek_token(), Operator) and self.tokens.peek_token().op == ")":
+                        while True:
+                            parameters.append(self.parse_expr())
+                            match self.tokens.peek_token():
+                                case Operator(op) if op in ")":
                                     self.tokens.advance()
                                     break
-                                elif isinstance(self.tokens.peek_token(), Operator) and self.tokens.peek_token().op == ",":
-                                    self.tokens.advance()
-                                    continue
-                                else:
-                                    raise SyntaxError("Unexpected token")
-
-                            elif isinstance(self.tokens.peek_token(), Operator) and self.tokens.peek_token().op == ";":
-                                self.tokens.advance()
-                                break
+                            self.tokens.match(Operator(","))
 
                         return FunctionCall(identifier.make(name), parameters)
 
                     case _:
                         raise SyntaxError("Unexpected token")
-
+                    
     def parse_function(self):
         match self.tokens.peek_token():
             case Keyword("def"):
@@ -728,6 +707,13 @@ class Parser:
         if exprs[0] == None:
             return list_initializer(numeric_literal(0), numeric_literal(0))
         
+        match exprs[0]:
+            case Identifier(name):
+                exprs[0] = get(exprs[0])
+        match exprs[1]:
+            case Identifier(name):
+                exprs[1] = get(exprs[1])
+
         return list_initializer(exprs[0], exprs[1])
 
     def parse_List(self):
@@ -1062,7 +1048,7 @@ def test_parse28():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    string = "{var j = list();}"
+    string = "{var j = list(2, r);}"
     # string = repr(string)
     print(parse(string))
 
@@ -1073,6 +1059,16 @@ def test_parse29():
                 Stream.streamFromString(string)))
         )
     string = "{ print p[a.length - 1];}"
+    # string = repr(string)
+    print(parse(string))
+
+def test_parse30():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "{ fun(a-1);}"
     # string = repr(string)
     print(parse(string))
     
@@ -1103,3 +1099,4 @@ def test_parse29():
 # test_parse24()
 # test_parse28()
 # test_parse29()
+# test_parse30()
