@@ -104,6 +104,34 @@ def resolve(subprogram: AST, lexical_scope=None, name_space=None) -> AST:
             rfn = resolve_(fn)
             rargs = [resolve_(e) for e in args]
             return FunctionCall(rfn, rargs)
+        
+        case Lists(lst):
+            return Lists([resolve_(e) for e in lst])
+        case u_list_operation(op, lst):
+            rlst = resolve_(lst)
+            return u_list_operation(op, rlst)
+        case b_list_operation(op, lst1, lst2):
+            rlst1 = resolve_(lst1)
+            rlst2 = resolve_(lst2)
+            return b_list_operation(op, rlst1, rlst2)
+        case length(lst):
+            rlst = resolve_(lst)
+            return length(rlst)
+        case find(lst, e):
+            rlst = resolve_(lst)
+            re = resolve_(e)
+            return find(rlst, re)
+        case put(e1, e2, e3):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            re3 = resolve_(e3)
+            return put(re1, re2, re3)
+        case list_initializer(e1, e2):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            return list_initializer(re1, re2)
+        
+
 
 
 pp = pprint.PrettyPrinter(indent=2)

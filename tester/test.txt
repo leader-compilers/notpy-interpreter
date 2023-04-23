@@ -1,0 +1,24 @@
+var a = list();
+a.append(1);
+a.append(2);
+a.cons(0);
+print a;
+var b = a.head;
+print b;
+var c = a.tail;
+print c;
+var d = a.empty;
+print d;
+a[1] = 3;
+print a;
+
+
+var i = 0;
+var l = list();
+while(i<10)
+{
+    var temp = i + 1;
+    l.append(temp);
+    i = i + 1;
+}
+print l;

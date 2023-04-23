@@ -1,0 +1,24 @@
+var d = {"a":0, "b": 1};
+print d;
+
+print d.keys;
+print d.values;
+print d.items;
+d.delete("a");
+print d;
+
+print d.length;
+d["c"] = 2;
+print d;
+print d["b"];
+
+
+var my_dict = {0: 0};
+my_dict.delete(0);
+var i = 0;
+while(i<10)
+{
+    my_dict[i] = i;
+    i = i + 1;
+}
+print my_dict;

@@ -136,6 +136,22 @@ class I:
     class INIT_LIST:
         pass
 
+    @dataclass 
+    class LIST_TAIL:
+        pass
+
+    @dataclass
+    class LIST_EMPTY:
+        pass
+
+    @dataclass
+    class LIST_CONS:
+        pass
+
+    @dataclass
+    class LIST_APPEND:
+        pass
+
     @dataclass
     class BUILD_DICT:
         pass
@@ -198,6 +214,10 @@ Instruction = (
     | I.PRINT
     | I.BUILD_LIST
     | I.LIST_HEAD
+    | I.LIST_TAIL
+    | I.LIST_EMPTY
+    | I.LIST_CONS
+    | I.LIST_APPEND
     | I.INIT_LIST
     | I.BUILD_DICT
     | I.DICT_KEYS
@@ -417,6 +437,26 @@ class VM:
                         raise Exception("list is empty")
                     self.data.append(our_list[0])
                     self.ip += 1
+                case I.LIST_TAIL():
+                    our_list = self.data.pop()
+                    self.data.append(our_list[1:])
+                    self.ip += 1
+                case I.LIST_EMPTY():
+                    our_list = self.data.pop()
+                    self.data.append(len(our_list)==0)
+                    self.ip += 1
+                case I.LIST_CONS():
+                    our_list = self.data.pop()
+                    val = self.data.pop()
+                    our_list.insert(0,val)
+                    self.data.append(our_list)
+                    self.ip += 1
+                case I.LIST_APPEND():
+                    our_list = self.data.pop()
+                    val = self.data.pop()
+                    our_list.append(val)
+                    self.data.append(our_list)
+                    self.ip += 1
 
 
                 case I.BUILD_DICT():
@@ -453,14 +493,14 @@ class VM:
 
                 case I.LENGTH():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, List) or isinstance(data_structure, dict):
+                    if isinstance(data_structure, list) or isinstance(data_structure, dict):
                         self.data.append(len(data_structure))
                     else:
                         raise Exception("Invalid type for length")
                     self.ip += 1
                 case I.FIND():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, List):
+                    if isinstance(data_structure, list):
                         index = int(self.data.pop())
                         if(index > len(data_structure)):
                             raise Exception("Index out of bounds")
@@ -475,16 +515,16 @@ class VM:
                     self.ip += 1
                 case I.PUT():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, List):
+                    if isinstance(data_structure, list):
                         index = int(self.data.pop())
                         if(index > len(data_structure)):
                             raise Exception("Index out of bounds")
                         data_structure[index] = self.data.pop()
-                        self.data.append(data_structure)
+                        # self.data.append(data_structure)
                     elif isinstance(data_structure, dict):
                         key = self.data.pop()
                         data_structure[key] = self.data.pop()
-                        self.data.append(data_structure)
+                        # self.data.append(data_structure)
                     else:
                         raise Exception("Invalid type for lookup")
                     self.ip += 1
@@ -533,11 +573,13 @@ def do_codegen(
             for i in what:
                 codegen_(i)
             code.emit(I.PUSH(len(what)))
+            code.emit(I.BUILD_LIST())
         case dict_literal(what):
             for i in what:
                 codegen_(i[0])
                 codegen_(i[1])
             code.emit(I.PUSH(len(what)))
+            code.emit(I.BUILD_DICT())
         # case UnitLiteral():
         #     code.emit(I.PUSH(None))
         case binary_operation(op, left, right) if op in simple_ops:
@@ -619,16 +661,6 @@ def do_codegen(
 
         case declare(identifier as i, e):
             codegen_(e)
-            if isinstance(e, Lists):
-                code.emit(I.BUILD_LIST())
-            elif isinstance(e, dict_literal):
-                code.emit(I.BUILD_DICT())
-            code.emit(I.STORE(i.id))
-
-        case declare_list(identifier as i, size, val):
-            codegen_(size)
-            codegen_(val)
-            code.emit(I.INIT_LIST())
             code.emit(I.STORE(i.id))
 
         case print_statement() as i:
@@ -636,9 +668,31 @@ def do_codegen(
                 codegen_(exp)
                 code.emit(I.PRINT())
 
-        # case u_list_operation("head", list):
-        #     codegen_(get(list))
-        #     code.emit(I.LIST_HEAD())
+        case list_initializer(size, val):
+            codegen_(size)
+            codegen_(val)
+            code.emit(I.INIT_LIST())
+
+        case u_list_operation("head", l):
+            codegen_(l)
+            code.emit(I.LIST_HEAD())
+        case u_list_operation("tail", l):
+            codegen_(l)
+            code.emit(I.LIST_TAIL())
+        case u_list_operation("is_empty", l):
+            codegen_(l)
+            code.emit(I.LIST_EMPTY())
+
+        ## We might need to add the I.STORE() instruction in these cases
+        ## Might not as the parser will wrap it in set() or declare()
+        case b_list_operation("cons", e, l):
+            codegen_(e)
+            codegen_(l)
+            code.emit(I.LIST_CONS())
+        case b_list_operation("append", e, l):
+            codegen_(e)
+            codegen_(l)
+            code.emit(I.LIST_APPEND())
 
 
         case u_dict_operation("keys", dict):
@@ -657,16 +711,16 @@ def do_codegen(
             code.emit(I.STORE(dict.id))
 
         case length(x):
-            codegen_(get(x))
+            codegen_(x)
             code.emit(I.LENGTH())
         case find(x, index):
             codegen_(index)
-            codegen_(get(x))
+            codegen_(x)
             code.emit(I.FIND())
         case put(x, index, val):
             codegen_(val)
             codegen_(index)
-            codegen_(get(x))
+            codegen_(x)
             code.emit(I.PUT())
 
 
