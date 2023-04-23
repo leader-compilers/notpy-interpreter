@@ -716,6 +716,9 @@ class Parser:
                     break
             self.tokens.match(Operator(","))
         self.tokens.match(Operator(")"))
+        if exprs[0] == None:
+            return list_initializer(numeric_literal(0), numeric_literal(0))
+        
         return list_initializer(exprs[0], exprs[1])
 
     def parse_List(self):
@@ -732,7 +735,6 @@ class Parser:
     
     def parse_dict(self):
         self.tokens.match(Operator("{"))
-        self.tokens.match(Operator("{"))
         values = []
         keys = []
         dicto = []
@@ -747,7 +749,6 @@ class Parser:
                     break
             self.tokens.match(Operator(","))
             i+=1
-        self.tokens.match(Operator("}"))
         self.tokens.match(Operator("}"))
         return dict_literal(dicto)
     
@@ -992,7 +993,7 @@ def test_parse22():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    string = '''var a  = {{1:2, 7:3, 8:0}};'''
+    string = 'var a  = {"1" :2, "7":3, "8":0};'
     # string = repr(string)
     print(parse(string))
 
@@ -1046,6 +1047,16 @@ def test_parse27():
     # string = repr(string)
     print(parse(string))
 
+def test_parse28():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "var j = list();}"
+    # string = repr(string)
+    print(parse(string))
+
 # test_parse0()
 # test_parse1()
 # test_parse2()
@@ -1071,4 +1082,4 @@ def test_parse27():
 # test_parse22()
 # test_parse23()
 # test_parse24()
-# test_parse27()
+# test_parse28()

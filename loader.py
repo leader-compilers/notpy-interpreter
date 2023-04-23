@@ -25,4 +25,4 @@ def main(filename):
     # end=time.time()
     # print(end-start)
 
-main("euler14.txt")
+main("test_dict.txt")
