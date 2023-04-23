@@ -78,6 +78,19 @@ class Parser:
                         elif self.tokens.peek_token().word == "length":
                             self.tokens.advance()
                             return length(identifier.make(name))
+                        elif self.tokens.peek_token().word == "append":
+                            self.tokens.advance()
+                            self.tokens.match(Operator("("))
+                            match self.tokens.peek_token():
+                                case Identifier(name2):
+                                    a = identifier.make(name2)
+                                case String(value):
+                                    a = string_literal(value)
+                                case Num(value):
+                                    a = numeric_literal(value)
+                            self.tokens.advance()
+                            self.tokens.match(Operator(")"))
+                            return b_list_operation("append", a, identifier.make(name))
                         
                         elif self.tokens.peek_token().word == "keys":
                             self.tokens.advance()
@@ -1053,7 +1066,7 @@ def test_parse28():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    string = "var j = list();}"
+    string = "{var j = list();}"
     # string = repr(string)
     print(parse(string))
 
