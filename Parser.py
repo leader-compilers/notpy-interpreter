@@ -67,7 +67,7 @@ class Parser:
                             # print(self.tokens.peek_token())
                             self.tokens.match(Operator(")"))
                             self.tokens.match(Operator(";"))
-                            return b_list_operation("cons", a, identifier.make(name))
+                            return b_list_operation("cons", a, get(identifier.make(name)))
                         elif self.tokens.peek_token().word == "length":
                             self.tokens.advance()
                             return length(identifier.make(name))
@@ -83,7 +83,10 @@ class Parser:
                                     a = numeric_literal(value)
                             self.tokens.advance()
                             self.tokens.match(Operator(")"))
-                            return b_list_operation("append", a, identifier.make(name))
+                            match self.tokens.peek_token():
+                                case Operator(op) if op in ";":
+                                    self.tokens.advance()
+                            return b_list_operation("append", a, get(identifier.make(name)))
                         
                         elif self.tokens.peek_token().word == "keys":
                             self.tokens.advance()
@@ -107,7 +110,7 @@ class Parser:
                             self.tokens.advance()
                             self.tokens.match(Operator(")"))
                             self.tokens.match(Operator(";"))
-                            return b_dict_operation("delete", identifier.make(name), key)
+                            return b_dict_operation("delete", get(identifier.make(name)), key)
                 return get(identifier.make(name))
 
             case Num(value):
@@ -966,7 +969,7 @@ def test_parse18():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    print(parse("a.cons(1);"))
+    print(parse("a.append(1);"))
 
 def test_parse19():
     def parse(string):
@@ -1069,7 +1072,7 @@ def test_parse29():
             Parser.call_parser(lexer.lexerFromStream(
                 Stream.streamFromString(string)))
         )
-    string = "{ var e = a[c-1];}"
+    string = "{ print p[a.length - 1];}"
     # string = repr(string)
     print(parse(string))
     

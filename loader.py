@@ -20,9 +20,9 @@ def main(filename):
     # v.load(compile(resolvedast))
     # print(v.bytecode.insns)
     # v.execute()
-    # print(ast)
+    print(ast)
     output = e.eval_ast(ast)
     # end=time.time()
     # print(end-start)
 
-main("test_dict.txt")
+main("eu.txt")
