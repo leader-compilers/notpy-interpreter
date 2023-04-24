@@ -6,6 +6,7 @@ from resolver import *
 from eval import *
 
 
+
 def test():
     pass
 
@@ -84,7 +85,9 @@ def test1_binOps():
 
 def test2_stringOps():
     # CONCAT
+
     v = VM()
+
     e1 = []
     for i in range(4):
         e1.append(string_literal(str(i)))
@@ -211,7 +214,6 @@ def test6():
     v = VM()
     v.load(compile(ast))
     v.execute()
-
 
 def test7_listOps():
     v = VM()
@@ -364,18 +366,19 @@ def test7_listOps():
     assert(v.execute() == [0, 1, 4, 3, 4])
 
 
+
 def test8_dictOps():
     v = VM()
     d = identifier.make("d")
-    e1 = dict_literal([(string_literal("a"), numeric_literal(1)),
-                      (string_literal("b"), numeric_literal(2))])
+    e1 = dict_literal([(string_literal("a"), numeric_literal(1)), (string_literal("b"), numeric_literal(2))])
+
     e2 = declare(d, e1)
     v.load(compile(e2))
     v.execute()
     v.load(compile(get(d)))
     assert(v.execute() == {"a": 1, "b": 2})
 
-    # Testing u_dict_operation
+    ## Testing u_dict_operation
     e1 = length(d)
     v.load(compile(e1))
     assert(v.execute() == 2)
@@ -389,7 +392,8 @@ def test8_dictOps():
     v.load(compile(e4))
     assert(v.execute() == [("a", 1), ("b", 2)])
 
-    # Testing b_dict_operation
+
+    ## Testing b_dict_operation
     e1 = find(d, string_literal("a"))
     v.load(compile(e1))
     assert(v.execute() == 1)
@@ -431,7 +435,6 @@ def test8_dictOps():
     v.load(compile(e4))
     assert(v.execute() == {"z": 0, "y": 25})
 
-
 def test7():
     with open("test1.txt") as f:
         code = f.read()
@@ -450,6 +453,70 @@ def test7():
     # print_bytecode(v.bytecode)
     v.execute()
 
+def test7_listOps():
+    v = VM()
+    x = identifier("x", 0)
+    e1 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
+    e2 = declare(x, e1)
+    v.load(compile(e2))
+    v.execute()
+    v.load(compile(get(x)))
+    assert(v.execute() == [1, 2, 3])
+
+
+    l = identifier("l", 1)
+    e3 = declare_list(l, numeric_literal(4), numeric_literal(1))
+    e4 = get(l)
+    v.load(compile(e3))
+    v.execute()
+    v.load(compile(e4))
+    assert(v.execute() == [1, 1, 1, 1])
+
+
+    # e3 = get(x)
+    # v.load(compile(e3))
+    # assert(v.execute() == [1, 2, 3])
+    # assert(eval_ast(e2, None, name_space) == [1, 2, 3])
+
+    # y = identifier.make("y")
+    # eval_ast(declare(y, numeric_literal(4)), None, name_space)
+    # eval_ast(set(y, e1), None, name_space)
+    # assert(eval_ast(get(y), None, name_space) == [1, 2, 3])
+
+    # ## Initlializing list ot test list operations
+    # l = identifier.make("l")
+    # e3 = Lists([numeric_literal(1), numeric_literal(2), numeric_literal(3)])
+    # eval_ast(declare(l, e3), None, name_space)
+
+    # ## Tests for Head
+    # e4 = u_list_operation("head", l)
+    # assert(eval_ast(e4, None, name_space) == 1)
+
+    # ## Tests for Tail
+    # e5 = u_list_operation("tail", l)
+    # assert(eval_ast(e5, None, name_space) == [2, 3])
+
+    # ## Tests for Is_Empty
+    # e6 = u_list_operation("is_empty", l)
+    # assert(eval_ast(e6, None, name_space) == False)
+
+    # ## Tests for Cons
+    # e7 = b_list_operation("cons", numeric_literal(0), l)
+    # assert(eval_ast(e7, None, name_space) == [0, 1, 2, 3])
+
+
+    # ## Tests for Find
+    # for i in range(4):
+    #     e4 = b_list_operation("find", l, numeric_literal(i))    
+    #     assert(eval_ast(e4, None, name_space) == i)
+
+    # ## Tests for Set
+    # for i in range(4):
+    #     e5 = t_list_operation("set", l, numeric_literal(i), numeric_literal(4))
+    #     eval_ast(e5, None, name_space)
+    # assert(eval_ast(get(l), None, name_space) == [4, 4, 4, 4])
+
+
 # test1_binOps()
 # test2_stringOps()
 # test3_unaryOps()
@@ -457,4 +524,4 @@ def test7():
 # test6()
 # test7_listOps()
 # test8_dictOps()
-test7()
+# test7()
