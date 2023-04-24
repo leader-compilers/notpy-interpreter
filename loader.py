@@ -3,6 +3,7 @@ import Parser as p
 import eval as e
 import typechecking as t
 import resolver as r
+from bytecode import *
 
 
 def main(filename):
@@ -14,8 +15,11 @@ def main(filename):
     parse = p.Parser.call_parser(tokens)
     ast = p.Parser.parse_expr(parse)
     resolvedast = r.resolve(ast)
-    typedast = t.typecheck(resolvedast)
-    output = e.eval_ast(typedast)
+    #typedast = t.typecheck(resolvedast)
+    #output = e.eval_ast(resolvedast)
+    v = VM()
+    v.load(compile(resolvedast))
+    v.execute()
 
 
-main("euler1.txt")
+main("euler14.txt")

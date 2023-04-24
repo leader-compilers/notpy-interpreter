@@ -137,6 +137,22 @@ class I:
         pass
 
     @dataclass
+    class LIST_TAIL:
+        pass
+
+    @dataclass
+    class LIST_EMPTY:
+        pass
+
+    @dataclass
+    class LIST_CONS:
+        pass
+
+    @dataclass
+    class LIST_APPEND:
+        pass
+
+    @dataclass
     class BUILD_DICT:
         pass
 
@@ -166,6 +182,18 @@ class I:
 
     @dataclass
     class PUT:
+        pass
+
+    @dataclass
+    class PUSHFN:
+        entry: Label
+
+    @dataclass
+    class CALL:
+        pass
+
+    @dataclass
+    class RETURN:
         pass
 
 
@@ -198,6 +226,10 @@ Instruction = (
     | I.PRINT
     | I.BUILD_LIST
     | I.LIST_HEAD
+    | I.LIST_TAIL
+    | I.LIST_EMPTY
+    | I.LIST_CONS
+    | I.LIST_APPEND
     | I.INIT_LIST
     | I.BUILD_DICT
     | I.DICT_KEYS
@@ -207,6 +239,9 @@ Instruction = (
     | I.PUT
     | I.LENGTH
     | I.FIND
+    | I.CALL
+    | I.RETURN
+    | I.PUSHFN
 )
 
 
@@ -227,6 +262,16 @@ class ByteCode:
         label.target = len(self.insns)
 
 
+@dataclass
+class Frame:
+    retaddr: int = -1
+
+
+@dataclass
+class beginFunction:
+    entry: int
+
+
 # class Frame:
 #     locals: List[Value]
 
@@ -234,7 +279,7 @@ class ByteCode:
 #         MAX_LOCALS = 32
 #         self.locals = [None] * MAX_LOCALS
 
-#global environment
+# global environment    
 global_environment: dict[int:'Value'] = {}
 
 
@@ -242,7 +287,7 @@ class VM:
     bytecode: ByteCode
     ip: int
     data: List[Value]
-    #currentFrame: Frame
+    currentFrame: Frame
 
     def load(self, bytecode):
         self.bytecode = bytecode
@@ -251,7 +296,7 @@ class VM:
     def restart(self):
         self.ip = 0
         self.data = []
-        #self.currentFrame = Frame()
+        self.currentFrame = Frame()
 
     def execute(self) -> Value:
         while True:
@@ -260,6 +305,18 @@ class VM:
                 case I.PUSH(val):
                     self.data.append(val)
                     self.ip += 1
+                case I.PUSHFN(Label(offset)):
+                    self.data.append(beginFunction(offset))
+                    self.ip += 1
+                case I.CALL():
+                    bf = self.data.pop()
+                    self.currentFrame = Frame(
+                        retaddr=self.ip + 1,
+                    )
+                    self.ip = bf.entry
+                case I.RETURN():
+                    self.ip = self.currentFrame.retaddr
+
                 case I.UMINUS():
                     op = self.data.pop()
                     self.data.append(-op)
@@ -375,7 +432,7 @@ class VM:
                 case I.STORE(localID):
                     v = self.data.pop()
                     global_environment[localID] = v
-                    #self.currentFrame.locals[localID] = v
+                    # self.currentFrame.locals[localID] = v
                     self.ip += 1
                 case I.PRINT():
                     print(self.data.pop())
@@ -413,11 +470,30 @@ class VM:
                     self.ip += 1
                 case I.LIST_HEAD():
                     our_list = self.data.pop()
-                    if(len(our_list)==0):
+                    if(len(our_list) == 0):
                         raise Exception("list is empty")
                     self.data.append(our_list[0])
                     self.ip += 1
-
+                case I.LIST_TAIL():
+                    our_list = self.data.pop()
+                    self.data.append(our_list[1:])
+                    self.ip += 1
+                case I.LIST_EMPTY():
+                    our_list = self.data.pop()
+                    self.data.append(len(our_list) == 0)
+                    self.ip += 1
+                case I.LIST_CONS():
+                    our_list = self.data.pop()
+                    val = self.data.pop()
+                    our_list.insert(0, val)
+                    self.data.append(our_list)
+                    self.ip += 1
+                case I.LIST_APPEND():
+                    our_list = self.data.pop()
+                    val = self.data.pop()
+                    our_list.append(val)
+                    self.data.append(our_list)
+                    self.ip += 1
 
                 case I.BUILD_DICT():
                     size = self.data.pop()
@@ -453,14 +529,14 @@ class VM:
 
                 case I.LENGTH():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, List) or isinstance(data_structure, dict):
+                    if isinstance(data_structure, list | dict | str):
                         self.data.append(len(data_structure))
                     else:
                         raise Exception("Invalid type for length")
                     self.ip += 1
                 case I.FIND():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, List):
+                    if isinstance(data_structure, list | str):
                         index = int(self.data.pop())
                         if(index > len(data_structure)):
                             raise Exception("Index out of bounds")
@@ -470,12 +546,12 @@ class VM:
                         if key not in data_structure.keys():
                             raise Exception("Key not found")
                         self.data.append(data_structure[key])
-                    else: 
+                    else:
                         raise Exception("Invalid type for lookup")
                     self.ip += 1
                 case I.PUT():
                     data_structure = self.data.pop()
-                    if isinstance(data_structure, List):
+                    if isinstance(data_structure, list):
                         index = int(self.data.pop())
                         if(index > len(data_structure)):
                             raise Exception("Index out of bounds")
@@ -485,12 +561,19 @@ class VM:
                         key = self.data.pop()
                         data_structure[key] = self.data.pop()
                         self.data.append(data_structure)
+                    elif isinstance(data_structure, str):
+                        index = int(self.data.pop())
+                        if(index > len(data_structure)):
+                            raise Exception("Index out of bounds")
+                        data_structure = data_structure[:index] + \
+                            self.data.pop() + data_structure[index+1:]
+                        self.data.append(data_structure)
                     else:
                         raise Exception("Invalid type for lookup")
                     self.ip += 1
 
                 case I.HALT():
-                    if(len(self.data)==0):
+                    if(len(self.data) == 0):
                         return None
                     return self.data.pop()
 
@@ -533,11 +616,16 @@ def do_codegen(
             for i in what:
                 codegen_(i)
             code.emit(I.PUSH(len(what)))
+            code.emit(I.BUILD_LIST())
         case dict_literal(what):
             for i in what:
                 codegen_(i[0])
                 codegen_(i[1])
             code.emit(I.PUSH(len(what)))
+            code.emit(I.BUILD_DICT())
+        case update_string(e, what):
+            code.emit(I.PUSH(what))
+            code.emit(I.STORE(e.variable.name))
         # case UnitLiteral():
         #     code.emit(I.PUSH(None))
         case binary_operation(op, left, right) if op in simple_ops:
@@ -619,16 +707,6 @@ def do_codegen(
 
         case declare(identifier as i, e):
             codegen_(e)
-            if isinstance(e, Lists):
-                code.emit(I.BUILD_LIST())
-            elif isinstance(e, dict_literal):
-                code.emit(I.BUILD_DICT())
-            code.emit(I.STORE(i.id))
-
-        case declare_list(identifier as i, size, val):
-            codegen_(size)
-            codegen_(val)
-            code.emit(I.INIT_LIST())
             code.emit(I.STORE(i.id))
 
         case print_statement() as i:
@@ -636,10 +714,31 @@ def do_codegen(
                 codegen_(exp)
                 code.emit(I.PRINT())
 
-        # case u_list_operation("head", list):
-        #     codegen_(get(list))
-        #     code.emit(I.LIST_HEAD())
+        case list_initializer(size, val):
+            codegen_(size)
+            codegen_(val)
+            code.emit(I.INIT_LIST())
 
+        case u_list_operation("head", l):
+            codegen_(l)
+            code.emit(I.LIST_HEAD())
+        case u_list_operation("tail", l):
+            codegen_(l)
+            code.emit(I.LIST_TAIL())
+        case u_list_operation("is_empty", l):
+            codegen_(l)
+            code.emit(I.LIST_EMPTY())
+
+        # We might need to add the I.STORE() instruction in these cases
+        # Might not as the parser will wrap it in set() or declare()
+        case b_list_operation("cons", e, l):
+            codegen_(e)
+            codegen_(l)
+            code.emit(I.LIST_CONS())
+        case b_list_operation("append", e, l):
+            codegen_(e)
+            codegen_(l)
+            code.emit(I.LIST_APPEND())
 
         case u_dict_operation("keys", dict):
             codegen_(get(dict))
@@ -657,117 +756,24 @@ def do_codegen(
             code.emit(I.STORE(dict.id))
 
         case length(x):
-            codegen_(get(x))
+            codegen_(x)
             code.emit(I.LENGTH())
         case find(x, index):
             codegen_(index)
-            codegen_(get(x))
+            codegen_(x)
             code.emit(I.FIND())
         case put(x, index, val):
             codegen_(val)
             codegen_(index)
-            codegen_(get(x))
+            codegen_(x)
             code.emit(I.PUT())
+            if(isinstance(x, get)):
+                code.emit(I.STORE(x.variable.id))
+            # This does not make sense as we only execute our AST once, so
+            # we won't have the value of x in the global environment
+            # if(isinstance(x, get) and isinstance(global_environment[x.variable.id], str)):
+            #     code.emit(I.STORE(x.variable.id))
 
-
-        # case identifier(name) as i:
-        #     code.emit(I.LOAD(i.id))
-
-        # recheck below cases
-        case let_var() as i:
-            code.emit(I.LOAD(i.id))
-        # case let(let_var as i, e1, e2):
-        #     codegen_(e1)
-        #     code.emit(I.STORE(i.localID))
-        #     codegen_(e2)
-
-        case get(identifier as i):
-            code.emit(I.LOAD(i.id))
-
-        case set(identifier as i, e):
-            codegen_(e)
-            code.emit(I.STORE(i.id))
-
-        case declare(identifier as i, e):
-            codegen_(e)
-            if isinstance(e, Lists):
-                code.emit(I.BUILD_LIST())
-            elif isinstance(e, dict_literal):
-                code.emit(I.BUILD_DICT())
-            code.emit(I.STORE(i.id))
-
-        case declare_list(identifier as i, size, val):
-            codegen_(size)
-            codegen_(val)
-            code.emit(I.INIT_LIST())
-            code.emit(I.STORE(i.id))
-
-        case print_statement() as i:
-            for exp in i.exps:
-                codegen_(exp)
-                code.emit(I.PRINT())
-
-        # case u_list_operation("head", list):
-        #     codegen_(get(list))
-        #     code.emit(I.LIST_HEAD())
-
-
-        case u_dict_operation("keys", dict):
-            codegen_(get(dict))
-            code.emit(I.DICT_KEYS())
-        case u_dict_operation("values", dict):
-            codegen_(get(dict))
-            code.emit(I.DICT_VALUES())
-        case u_dict_operation("items", dict):
-            codegen_(get(dict))
-            code.emit(I.DICT_ITEMS())
-        case b_dict_operation("delete", dict, key):
-            codegen_(get(dict))
-            codegen_(key)
-            code.emit(I.DICT_DELETE())
-            code.emit(I.STORE(dict.id))
-
-        case length(x):
-            codegen_(get(x))
-            code.emit(I.LENGTH())
-        case find(x, index):
-            codegen_(index)
-            codegen_(get(x))
-            code.emit(I.FIND())
-        case put(x, index, val):
-            codegen_(val)
-            codegen_(index)
-            codegen_(get(x))
-            code.emit(I.PUT())
-
-
-        # case identifier(name) as i:
-        #     code.emit(I.LOAD(i.id))
-
-        # recheck below cases
-        case let_var() as i:
-            code.emit(I.LOAD(i.id))
-        # case let(let_var as i, e1, e2):
-        #     codegen_(e1)
-        #     code.emit(I.STORE(i.localID))
-        #     codegen_(e2)
-
-        case get(identifier as i):
-            code.emit(I.LOAD(i.id))
-
-        case set(identifier as i, e):
-            codegen_(e)
-            code.emit(I.STORE(i.id))
-
-        case declare(identifier as i, e):
-            codegen_(e)
-            code.emit(I.STORE(i.id))
-
-        case print_statement() as i:
-            for exp in i.exps:
-                codegen_(exp)
-                code.emit(I.PRINT())
-            print()
         # case (Variable() as v) | unary_operation("!", Variable() as v):
         #     code.emit(I.LOAD(v.localID))
         # case Put(Variable() as v, e):
@@ -779,10 +785,30 @@ def do_codegen(
         #     codegen_(e2)
         # case TypeAssertion(expr, _):
         #     codegen_(expr)
+        case Function(fv, parameters, body, return_exp):
+            codebegin = code.label()
+            fnbegin = code.label()
+            code.emit(I.JMP(codebegin))
+            code.emit_label(fnbegin)
+            for param in reversed(parameters):
+                code.emit(I.STORE(param.id))
+            codegen_(body)
+            codegen_(return_exp)
+            code.emit(I.RETURN())
+            code.emit_label(codebegin)
+            code.emit(I.PUSHFN(fnbegin))
+            code.emit(I.STORE(fv.id))
+
+        case FunctionCall(fn, args):
+            for arg in args:
+                codegen_(arg)
+            code.emit(I.LOAD(fn.id))
+            code.emit(I.CALL())
 
 
 def compile(program):
     return codegen(program)
+
 
 def print_bytecode(code: ByteCode):
     for i, op in enumerate(code.insns):
@@ -793,5 +819,7 @@ def print_bytecode(code: ByteCode):
                 print(f"{i:=4} {op.__class__.__name__:<15} {localID}")
             case I.PUSH(value):
                 print(f"{i:=4} {'PUSH':<15} {value}")
+            case I.PUSHFN(Label(offset)):
+                print(f"{i:=4} {'PUSHFN':<15} {offset}")
             case _:
                 print(f"{i:=4} {op.__class__.__name__:<15}")
