@@ -32,6 +32,19 @@ class StringType:
 class NoneType:
     pass
 
+@dataclass
+class ListType:
+    pass
+
+
+@dataclass
+class DictType:
+    pass
+
+
+@dataclass
+class FunctionType:
+    pass
 
 @dataclass
 class Null():
@@ -69,11 +82,13 @@ class string_literal:
 @dataclass
 class Lists:
     value: List["AST"]
+    type: ListType = ListType()
 
 
 @dataclass
 class dict_literal:
     value: dict["AST", "AST"]
+    type: DictType = DictType()
     
 # Binary Operations(Arithmetic and Boolean)
 @dataclass
@@ -95,6 +110,7 @@ class unary_operation:
 class u_list_operation:
     operator: str
     first: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType, ListType]] = None
 
 
 @dataclass
@@ -102,34 +118,39 @@ class b_list_operation:
     operator: str
     first: "AST"
     second: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType, ListType]] = None
 
 @dataclass
 class u_dict_operation:
     operator: str
     first: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType, DictType]] = None
 
 @dataclass
 class b_dict_operation:
     operator: str
     first: "AST"
     second: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType, DictType]] = None
 
 
 @dataclass
 class length:
     operand: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 @dataclass
 class find:
     operand: "AST"
     key: "AST"
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 @dataclass
 class put:
     operand: "AST"
     key: "AST"
     value: "AST"
-
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 # String operation (Can take variable number of strings depending on the operation)
 
@@ -191,7 +212,7 @@ class declare:
 class list_initializer:
     size: "AST"
     value: "AST"
-    # type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 
 @dataclass
@@ -210,18 +231,20 @@ class set:
 class update_list:
     variable: identifier
     value: List
-    # type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 @dataclass
 class update_dict:
     variable: identifier
     value: dict
-    # type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
 
 @dataclass
 class update_string:
     variable: identifier
     value: str
+    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
+    
 
 # If Expressions
 
@@ -306,7 +329,7 @@ class Function:
     parameters: List[identifier]
     body: 'AST'
     return_exp: 'AST'
-    type: Optional[Union[NumType, BoolType, StringType, NoneType]] = None
+    type: Optional[Union[NumType, BoolType, StringType, NoneType, FunctionType]] = None
 
 
 @dataclass
