@@ -16,19 +16,21 @@ def main(filename):
     parse = p.Parser.call_parser(tokens)
     ast = p.Parser.parse_expr(parse)
  
-    resolvedast = r.resolve(ast)
+   
+   
+   # resolvedast = r.resolve(ast)
     # print(ast)
     # print(resolvedast)
     # typedast = t.typecheck(resolvedast)
     output = e.eval_ast(ast)
-    v = b.VM()
-    v.load(b.compile(resolvedast))
-   # print(v.bytecode.insns)
-    output = v.execute()
+#     v = b.VM()
+#     v.load(b.compile(resolvedast))
+#    # print(v.bytecode.insns)
+#     output = v.execute()
 # #     # print(output)
 
 
-main("tester/e14_dict.txt")
+main("tester/q6.txt")
 
 #call main on all the files in the tester folder
 # for filename in os.listdir("tester"):

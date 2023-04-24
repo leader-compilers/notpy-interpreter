@@ -1,0 +1,14 @@
+
+def factorial(n){
+        var ans = 1;
+        if(n==1){
+            ans = 1;
+        }
+        else{
+            ans = n * factorial(n-1);
+        }
+        return ans;
+    }
+
+var a = factorial(5);
+print a;

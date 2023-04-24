@@ -447,7 +447,12 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 
         # Arithmetic Operations
         case binary_operation("+", left, right):
-            return Fraction(eval_ast(left, lexical_scope, name_space) + eval_ast(right, lexical_scope, name_space))
+            a=eval_ast(left, lexical_scope, name_space)
+            b=eval_ast(right, lexical_scope, name_space)
+            if isinstance(a, str):
+                return a+b
+            else:
+                return Fraction(eval_ast(left, lexical_scope, name_space) + eval_ast(right, lexical_scope, name_space))
         case binary_operation("-", left, right):
             return Fraction(eval_ast(left, lexical_scope, name_space) - eval_ast(right, lexical_scope, name_space))
         case binary_operation("*", left, right):
@@ -681,7 +686,7 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 if(index >= len(data_structure)):
                     raise Exception("Index out of bounds")
                 value = eval_ast(third, lexical_scope, name_space)
-                data_structure = data_structure[:index] + value + data_structure[index+1:]
+                data_structure = data_structure[:index] + str(value) + data_structure[index+1:]
                 if(isinstance(first, get)):
                     eval_ast(update_string(first, data_structure), lexical_scope, name_space)
                 return data_structure

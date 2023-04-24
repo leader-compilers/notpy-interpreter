@@ -1,0 +1,8 @@
+var bruh = "hello";
+var fin = "";
+
+var n = bruh.length-1;
+for (i = n; i > -1; i = i-1) {
+    fin = fin + bruh[i];
+}
+print fin;

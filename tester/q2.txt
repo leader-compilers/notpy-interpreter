@@ -1,0 +1,17 @@
+
+var u = "joyoierw";
+var len = 0;
+
+for (i=0; i<u.length; i=i+1){
+   if (u[i] == "a" or u[i] == "e"){
+    len = len+1;
+   }
+   if (u[i] == "i" or u[i] == "o"){
+    len = len+1;
+   }
+   if (u[i] == "u"){
+    len = len+1;
+   }
+}
+
+print len;

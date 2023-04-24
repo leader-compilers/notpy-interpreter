@@ -1,0 +1,18 @@
+var l = [1,2,3,4,5];
+var i = 0;
+var len = l.length;
+var max = -1;
+var max2 = -1;
+while(i<len){
+    if(max<l[i]){
+        max2 = max;
+        max = l[i];
+    }
+    else{
+        if(l[i]>max2 and l[i]!= max){
+            max2 = l[i];
+        }
+    }
+    i = i+1;
+}
+print max2;

@@ -1,0 +1,53 @@
+var m = 2147483648;
+var a = 594156893;
+var c = 71;
+var seed = 8837398203;
+var small = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
+var cap = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+
+var password = list();
+var r = list();
+var j = 0;
+var x = seed;
+while(j < 8)
+{
+    var temp = a * x;
+    x = temp % m;
+    r.append(x);
+    j = j + 1;
+}
+for(i = 0; i<8; i = i + 1)
+{
+    var val = r[i];
+    password.append(val);
+}
+
+var skip = password[3] % 8;
+for(i = 0; i<8; i = i + 1)
+{
+    if(i != skip)
+    {
+        var v = password[i] % 26;
+        password[i] = v;
+    }
+}
+password[skip] = password[skip] % 10;
+var capital_index = password[4] % 8;
+
+for(i = 0; i<8; i = i + 1){
+    if(i != skip)
+    {
+        var index = password[i];
+        var char = small[index];
+        password[i] = char;
+    }
+}
+var capital = cap[capital_index];
+password[capital_index] = capital;
+
+var s = "12345678";
+for(i = 0; i<8; i = i + 1){
+    var new = password[i];
+    s[i] = new;
+}
+print s;
