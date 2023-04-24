@@ -29,15 +29,8 @@ class Parser:
                         match self.tokens.peek_token():
                             case Operator(op) if op in "=":
                                 self.tokens.advance()
-                                match self.tokens.peek_token():
-                                    case Num(value):
-                                        val = numeric_literal(value)
-                                    case String(value):
-                                        val = string_literal(value)
-                                    case Identifier(name2):
-                                        val = get(identifier.make(name2))
-                                self.tokens.advance()
-                                self.tokens.match(Operator(";"))
+                                val = self.parse_logic()
+                                self.tokens.match(Operator(";"))   
                                 return put(get(identifier.make(name)), a, val)
                         return find(get(identifier.make(name)), a)
                     
@@ -97,6 +90,25 @@ class Parser:
                         elif self.tokens.peek_token().word == "items":
                             self.tokens.advance()
                             return u_dict_operation("items", get(identifier.make(name)))
+                        elif self.tokens.peek_token().word == "iskey":
+                            self.tokens.advance()
+                            self.tokens.match(Operator("("))
+                            # while True:
+                            #     a = self.parse_logic()
+                            #     if self.tokens.peek_token().word == ")":
+                            #         break
+                            match self.tokens.peek_token():
+                                case Identifier(name2):
+                                    key = get(identifier.make(name2))
+                                case String(value):
+                                    key = string_literal(value)
+                                case Num(value):
+                                    key = numeric_literal(value)
+                            self.tokens.advance()
+                            self.tokens.match(Operator(")"))
+                            self.tokens.match(Operator(";"))
+                            return b_dict_operation("iskey", get(identifier.make(name)), key)
+                        
                         elif self.tokens.peek_token().word == "delete":
                             self.tokens.advance()
                             self.tokens.match(Operator("("))
@@ -121,6 +133,22 @@ class Parser:
                 return bool_literal(bool(name))
             case String(value):
                 self.tokens.advance()
+                vals = []
+                match self.tokens.peek_token():
+                    case Operator(op) if op in "[":
+                        self.tokens.advance()
+                        while True:
+                            vals.append(self.parse_logic())
+                            match self.tokens.peek_token():
+                                case Operator(op) if op in "]":
+                                    self.tokens.advance()
+                                    break
+                            self.tokens.match(Operator(":"))
+                        
+                        if len(vals) == 2:
+                            return string_slice(string_literal(value), vals[0], vals[1])
+                        return string_slice(string_literal(value), vals[0], vals[1], vals[2])
+                      
                 return string_literal(value)
             case functionName(name):
                 a = self.parse_function_call()
@@ -190,7 +218,14 @@ class Parser:
                     if left == None:
                         left = unary_operation(op, m)
                     else:
-                        left = binary_operation(op, left, m)
+                        if isinstance(left, string_literal) and isinstance(m, string_literal):
+                            left = string_concat([left.value, m.value])
+                        elif isinstance(left, string_literal) and isinstance(m, string_concat):
+                            left = string_concat([left.value, m])
+                        elif isinstance(left, string_concat) and isinstance(m, string_concat):
+                            left = string_concat([left, m])
+                        else:
+                            left = binary_operation(op, left, m)
                 case _:
                     break
         return left
@@ -715,7 +750,9 @@ class Parser:
         i = 0
         while True:
             keys.append(self.parse_logic())
-            self.tokens.match(Operator(":"))
+            match self.tokens.peek_token():
+                case Operator(op) if op in ":":
+                    self.tokens.advance()
             values.append(self.parse_logic())
             dicto.append((keys[i],values[i]))
             match self.tokens.peek_token():
@@ -724,6 +761,8 @@ class Parser:
             self.tokens.match(Operator(","))
             i+=1
         self.tokens.match(Operator("}"))
+        if dicto[0][0] == None:
+            return dict_literal([()])
         return dict_literal(dicto)
     
     def parse_let(self):
@@ -1060,6 +1099,46 @@ def test_parse31():
     string = "{ a = fun(a+4, 0) + fun(b-9, 0);}"
     # string = repr(string)
     print(parse(string))
+
+def test_parse32():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "{ var a = {};}"
+    # string = repr(string)
+    print(parse(string))
+
+def test_parse33():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "{ a.iskey(3); }"
+    # string = repr(string)
+    print(parse(string))
+
+def test_parse34():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "{ dict[i] = i+1+4+9; }"
+    # string = repr(string)
+    print(parse(string))
+    
+def test_parse35():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = '{ a = "1" + "2"; }'
+    # string = repr(string)
+    print(parse(string))
     
 # test_parse0()
 # test_parse1()
@@ -1090,3 +1169,5 @@ def test_parse31():
 # test_parse29()
 # test_parse30()
 # test_parse31()
+# test_parse34()
+test_parse35()

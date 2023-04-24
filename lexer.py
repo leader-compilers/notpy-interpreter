@@ -110,7 +110,7 @@ class boolValue:
 
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
-keywords = "pass def print var True False if else then for while return end do let in pass def print var True False if else then for while return end do List let in head tail cons length delete keys values items list append".split()
+keywords = "pass def print var True False if else then for while return end do let in pass def print var True False if else then for while return end do List let in head tail cons length delete keys values items list append iskey".split()
 
 
 @dataclass
@@ -119,7 +119,7 @@ class boolValue:
 
 
 TokenType = Num | Keyword | Identifier | Operator | EndOfLine | String | functionName | null | boolValue
-keywords = "pass def print var True False if else then for while return end do let in pass def print var True False if else then for while return end do List let in head tail cons length delete keys values items list append".split()
+keywords = "pass def print var True False if else then for while return end do let in pass def print var True False if else then for while return end do List let in head tail cons length delete keys values items list append iskey".split()
 operators = ", . ; + - * % > < / >= <= == ! != ** ^ ( ) [ ] = and or not } ;; { :".split(
 )
 white_space = " \t\n"
