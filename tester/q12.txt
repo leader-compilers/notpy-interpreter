@@ -1,4 +1,3 @@
-
 var n = "forgeeksskeegfor";
 var l = n.length;
 var longest = "";
@@ -8,20 +7,23 @@ var subsrev = "";
 for(i = 0; i < l; i=i+1){
     j = l-1;
     while(i < j){
-        if(n[i] == n[j] and longest.length < (j-i+1)){
+        var temp2 = j-i;
+        var temp = temp2+1;
+        if(n[i] == n[j] and longest.length < temp){
             var b = "";
-            for(k = i; k <= j; k++){
-                b += n[k];
+            for(k = i; k < j+1; k=k+1){
+                b = b + n[k];
             }
             subs = b;
             var a = "";
             for(k = subs.length-1; k > -1; k = k-1){
-                a += subs[k];
+                a = a + subs[k];
             }
             subsrev = a;
             if(subs == subsrev){
                 longest = subs;
             }
+            
         }
         j = j-1;
     }

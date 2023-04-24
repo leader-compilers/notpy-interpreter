@@ -33,8 +33,8 @@ def main(filename):
 main("tester/q6.txt")
 
 #call main on all the files in the tester folder
-# for filename in os.listdir("tester"):
-#     if filename.endswith(".txt"):
-#         print(filename)
-#         main("tester/" + filename)
+for filename in os.listdir("tester"):
+    if filename.endswith(".txt"):
+        print(filename)
+        main("tester/" + filename)
 
