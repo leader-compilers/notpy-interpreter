@@ -23,8 +23,26 @@ class Parser:
                         self.tokens.advance()
                         return self.parse_set(name)
                     case Operator(op) if op in "[":
+                        vals = []
                         self.tokens.advance()
                         a = self.parse_logic()
+                        match self.tokens.peek_token():
+                            case Operator(op) if op in ":":
+                                self.tokens.advance()
+                                vals.append(a)
+                                while True:
+                                    vals.append(self.parse_logic())
+                                    match self.tokens.peek_token():
+                                        case Operator(op) if op in "]":
+                                            self.tokens.advance()
+                                            self.tokens.match(Operator(";"))
+                                            break
+                                        case Operator(op) if op in ":":
+                                            self.tokens.advance()
+                                if len(vals) == 2:
+                                    return string_slice(string_literal(name), vals[0], vals[1])
+                                return string_slice(string_literal(name), vals[0], vals[1], vals[2])
+
                         self.tokens.match(Operator("]"))
                         match self.tokens.peek_token():
                             case Operator(op) if op in "=":
@@ -133,22 +151,21 @@ class Parser:
                 return bool_literal(bool(name))
             case String(value):
                 self.tokens.advance()
-                vals = []
-                match self.tokens.peek_token():
-                    case Operator(op) if op in "[":
-                        self.tokens.advance()
-                        while True:
-                            vals.append(self.parse_logic())
-                            match self.tokens.peek_token():
-                                case Operator(op) if op in "]":
-                                    self.tokens.advance()
-                                    break
-                            self.tokens.match(Operator(":"))
+                # vals = []
+                # match self.tokens.peek_token():
+                #     case Operator(op) if op in "[":
+                #         self.tokens.advance()
+                #         while True:
+                #             vals.append(self.parse_logic())
+                #             match self.tokens.peek_token():
+                #                 case Operator(op) if op in "]":
+                #                     self.tokens.advance()
+                #                     break
+                #             self.tokens.match(Operator(":"))
                         
-                        if len(vals) == 2:
-                            return string_slice(string_literal(value), vals[0], vals[1])
-                        return string_slice(string_literal(value), vals[0], vals[1], vals[2])
-                      
+                #         if len(vals) == 2:
+                #             return string_slice(string_literal(value), vals[0], vals[1])
+                #         return string_slice(string_literal(value), vals[0], vals[1], vals[2])
                 return string_literal(value)
             case functionName(name):
                 a = self.parse_function_call()
@@ -1140,6 +1157,16 @@ def test_parse35():
     # string = repr(string)
     print(parse(string))
     
+def test_parse36():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = '{ a[7:2]; }'
+    # string = repr(string)
+    print(parse(string))
+    
 # test_parse0()
 # test_parse1()
 # test_parse2()
@@ -1170,4 +1197,4 @@ def test_parse35():
 # test_parse30()
 # test_parse31()
 # test_parse34()
-test_parse35()
+# test_parse36()
