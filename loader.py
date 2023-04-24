@@ -14,16 +14,17 @@ def main(filename):
     tokens = l.lexer.lexerFromStream(stream)
     parse = p.Parser.call_parser(tokens)
     ast = p.Parser.parse_expr(parse)
-    # print(ast)
+ 
     resolvedast = r.resolve(ast)
+    # print(ast)
     # print(resolvedast)
     # typedast = t.typecheck(resolvedast)
     # output = e.eval_ast(ast)
     v = b.VM()
     v.load(b.compile(resolvedast))
-    # print(v.bytecode.insns)
+    #print(v.bytecode.insns)
     output = v.execute()
     # print(output)
 
 
-main("tester/eulertest.txt")
+main("tester/dict_test.txt")
