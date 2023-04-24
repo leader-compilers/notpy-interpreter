@@ -1,3 +1,7 @@
+All the programs are in directory tester.
+
+Running the loader.py will run all the programs in the directory(For Loop). If you want to run a particular file seperately,you can call the function main in loader.py. Eg: if I want to run only "q6.txt" then I should comment the for loop present at the end and call "main("tester/q6.txt")"
+
 Q1: Bhavesh
 Q2: Joy
 Q3: Bhavesh
