@@ -122,6 +122,9 @@ class Parser:
             case String(value):
                 self.tokens.advance()
                 return string_literal(value)
+            case functionName(name):
+                a = self.parse_function_call()
+                return a
 
     def parse_power(self):
         left = self.parse_primary()
@@ -283,12 +286,6 @@ class Parser:
                     b.append(self.parse_declare())
                     self.tokens.match(Operator(";"))
 
-                case functionName(name):
-                    b.append(self.parse_function_call())
-                    match self.tokens.peek_token():
-                        case Operator(op) if op in ";":
-                            self.tokens.advance()
-
                 case _:
                     tree = self.parse_logic()
                     b.append(tree)
@@ -350,12 +347,6 @@ class Parser:
                     b.append(self.parse_list_initialize())
                     return b[0]
 
-                case functionName(name):
-                    b.append(self.parse_function_call())
-                    match self.tokens.peek_token():
-                        case Operator(op) if op in ";":
-                            return b[0]
-
                 case _:
                     tree = self.parse_logic()
                     return tree
@@ -411,12 +402,6 @@ class Parser:
                 case Operator("{"):
                     b.append(self.parse_dict())
                     self.tokens.match(Operator(";"))
-                
-                case functionName(name):
-                    b.append(self.parse_function_call())
-                    match self.tokens.peek_token():
-                        case Operator(op) if op in ";":
-                            self.tokens.advance()
 
                 case _:
                     tree = self.parse_logic()
@@ -475,12 +460,6 @@ class Parser:
                     b.append(self.parse_dict())
                     self.tokens.match(Operator(";"))
 
-                case functionName(name):
-                    b.append(self.parse_function_call())
-                    match self.tokens.peek_token():
-                        case Operator(op) if op in ";":
-                            self.tokens.advance()
-
                 case _:
                     b.append(self.parse_logic())
                     return b
@@ -494,7 +473,7 @@ class Parser:
                         self.tokens.advance()
                         parameters = []
                         while True:
-                            parameters.append(self.parse_expr())
+                            parameters.append(self.parse_logic())
                             match self.tokens.peek_token():
                                 case Operator(op) if op in ")":
                                     self.tokens.advance()
@@ -504,7 +483,7 @@ class Parser:
                         return FunctionCall(identifier.make(name), parameters)
 
                     case _:
-                        raise SyntaxError("Unexpected token")
+                        raise SyntaxError("Missing '(' after function {name}")
                     
     def parse_function(self):
         match self.tokens.peek_token():
@@ -1071,6 +1050,16 @@ def test_parse30():
     string = "{ fun(a-1);}"
     # string = repr(string)
     print(parse(string))
+
+def test_parse31():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = "{ a = fun(a+4, 0) + fun(b-9, 0);}"
+    # string = repr(string)
+    print(parse(string))
     
 # test_parse0()
 # test_parse1()
@@ -1100,3 +1089,4 @@ def test_parse30():
 # test_parse28()
 # test_parse29()
 # test_parse30()
+# test_parse31()
