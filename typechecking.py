@@ -163,7 +163,7 @@ def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
         case Function(identifier(name) as v, parameters, body, return_exp):
             type_space.add_to_scope(
                 name, FunctionObject(parameters, body, return_exp))
-            return Function(v, parameters, body, return_exp, NoneType())
+            return Function(v, parameters, body, return_exp, FunctionType())
 
         case FunctionCall(fn, args):
             function = type_space.get_from_scope(fn.name)
@@ -183,6 +183,56 @@ def typecheck(program: AST, lexical_scope=None, type_space=None) -> TypedAST:
             fn.type = function.return_exp.type
             type_space.end_scope()
             return FunctionCall(fn, args, function.return_exp.type)
+
+        case Lists(lst):
+            for i in lst:
+                i.type = typecheck(i, lexical_scope, type_space).type
+            return Lists(lst, ListType())
+
+        case u_list_operation(op, lst):
+            lst.type = typecheck(lst, lexical_scope, type_space).type
+            return u_list_operation(op, lst, ListType())
+
+        case b_list_operation(op, lst1, lst2):
+            lst1.type = typecheck(lst1, lexical_scope, type_space).type
+            lst2.type = typecheck(lst2, lexical_scope, type_space).type
+            return b_list_operation(op, lst1, lst2, ListType())
+
+        case length(lst):
+            lst.type = typecheck(lst, lexical_scope, type_space).type
+            return length(lst, NumType())
+
+        case find(lst, e):
+            lst.type = typecheck(lst, lexical_scope, type_space).type
+            e.type = typecheck(e, lexical_scope, type_space).type
+            return find(lst, e, NumType())
+
+        case put(e1, e2, e3):
+            e1.type = typecheck(e1, lexical_scope, type_space).type
+            e2.type = typecheck(e2, lexical_scope, type_space).type
+            e3.type = typecheck(e3, lexical_scope, type_space).type
+            return put(e1, e2, e3, e3.type)
+
+        case list_initializer(e1, e2):
+            e1.type = typecheck(e1, lexical_scope, type_space).type
+            e2.type = typecheck(e2, lexical_scope, type_space).type
+            return list_initializer(e1, e2, ListType())
+        case dict_literal(val):
+            rval = {}
+            for k, v in val.items():
+                rk = typecheck(k, lexical_scope, type_space)
+                rv = typecheck(v, lexical_scope, type_space)
+                rval[rk] = rv
+            return dict_literal(rval)
+
+        case u_dict_operation(op, e):
+            e.type = typecheck(e, lexical_scope, type_space).type
+            return u_dict_operation(op, e, DictType())
+
+        case b_dict_operation(op, e1, e2):
+            e1.type = typecheck(e1, lexical_scope, type_space).type
+            e2.type = typecheck(e2, lexical_scope, type_space).type
+            return b_dict_operation(op, e1, e2, DictType())
 
     raise TypeError()
 
