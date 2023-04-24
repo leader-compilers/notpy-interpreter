@@ -138,7 +138,10 @@ class string_concat:
     operands: List["AST"]
     type: StringType = StringType()
 
-
+@dataclass
+class input_statement:
+    string: str
+    type: StringType = StringType()
 @dataclass
 class string_slice:
     string: "AST"

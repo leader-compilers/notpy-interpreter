@@ -398,6 +398,10 @@ class Parser:
                 case Keyword("list"):
                     b.append(self.parse_list_initialize())
                     return b[0]
+                
+                case Keyword("input"):
+                    b.append(self.parse_input())
+                    return b[0]
 
                 case _:
                     tree = self.parse_logic()
@@ -712,7 +716,15 @@ class Parser:
         else:
             body = block(exprs)
         return for_loop(identifier.make(iterator), initial_value, condition, increment, body)
-
+    
+    def parse_input(self):
+        self.tokens.match(Keyword("input"))
+        self.tokens.match(Operator("("))
+        string = self.tokens.peek_token().s
+        self.tokens.advance()
+        self.tokens.match(Operator(")"))
+        return input_statement(string)
+    
     def parse_print(self):
         self.tokens.match(Keyword("print"))
         exprs = []
@@ -1166,6 +1178,16 @@ def test_parse36():
     string = '{ a[7:2]; }'
     # string = repr(string)
     print(parse(string))
+
+def test_parse37():
+    def parse(string):
+        return Parser.parse_expr(
+            Parser.call_parser(lexer.lexerFromStream(
+                Stream.streamFromString(string)))
+        )
+    string = '{ var a = input("string"); }'
+    # string = repr(string)
+    print(parse(string))
     
 # test_parse0()
 # test_parse1()
@@ -1198,3 +1220,4 @@ def test_parse36():
 # test_parse31()
 # test_parse34()
 # test_parse36()
+test_parse37()
