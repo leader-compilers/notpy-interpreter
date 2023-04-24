@@ -134,7 +134,13 @@ def resolve(subprogram: AST, lexical_scope=None, name_space=None) -> AST:
             re1 = resolve_(e1)
             re2 = resolve_(e2)
             return list_initializer(re1, re2)
-        
+        case u_dict_operation(op, e):
+            re = resolve_(e)
+            return u_dict_operation(op, re)
+        case b_dict_operation(op, e1, e2):
+            re1 = resolve_(e1)
+            re2 = resolve_(e2)
+            return b_dict_operation(op, re1, re2)
 
 
 
