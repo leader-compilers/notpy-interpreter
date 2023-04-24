@@ -187,6 +187,18 @@ class I:
     @dataclass
     class INPUT:
         string:str
+            
+    @dataclass
+    class PUSHFN:
+        entry: Label
+
+    @dataclass
+    class CALL:
+        pass
+
+    @dataclass
+    class RETURN:
+        pass
 
 
 Instruction = (
@@ -232,6 +244,10 @@ Instruction = (
     | I.LENGTH
     | I.FIND
     | I.INPUT
+    | I.CALL
+    | I.RETURN
+    | I.PUSHFN
+    
 )
 
 
@@ -262,12 +278,22 @@ class ByteCode:
 #global environment
 global_environment: dict[int:'Value'] = {}
 
+@dataclass
+class Frame:
+    retaddr: int = -1
+
+
+@dataclass
+class beginFunction:
+    entry: int
+
+        
 
 class VM:
     bytecode: ByteCode
     ip: int
     data: List[Value]
-    #currentFrame: Frame
+    currentFrame: Frame
 
     def load(self, bytecode):
         self.bytecode = bytecode
@@ -276,7 +302,7 @@ class VM:
     def restart(self):
         self.ip = 0
         self.data = []
-        #self.currentFrame = Frame()
+        self.currentFrame = Frame()
 
     def execute(self) -> Value:
         while True:
@@ -288,6 +314,17 @@ class VM:
                 case I.PUSH(val):
                     self.data.append(val)
                     self.ip += 1
+                case I.PUSHFN(Label(offset)):
+                    self.data.append(beginFunction(offset))
+                    self.ip += 1
+                case I.CALL():
+                    bf = self.data.pop()
+                    self.currentFrame = Frame(
+                        retaddr=self.ip + 1,
+                    )
+                    self.ip = bf.entry
+                case I.RETURN():
+                    self.ip = self.currentFrame.retaddr              
                 case I.UMINUS():
                     op = self.data.pop()
                     self.data.append(-op)
@@ -760,7 +797,40 @@ def do_codegen(
         #     codegen_(e2)
         # case TypeAssertion(expr, _):
         #     codegen_(expr)
+        case Function(fv, parameters, body, return_exp):
+            codebegin = code.label()
+            fnbegin = code.label()
+            code.emit(I.JMP(codebegin))
+            code.emit_label(fnbegin)
+            for param in reversed(parameters):
+                code.emit(I.STORE(param.id))
+            codegen_(body)
+            codegen_(return_exp)
+            code.emit(I.RETURN())
+            code.emit_label(codebegin)
+            code.emit(I.PUSHFN(fnbegin))
+            code.emit(I.STORE(fv.id))
 
+        case FunctionCall(fn, args):
+            for arg in args:
+                codegen_(arg)
+            code.emit(I.LOAD(fn.id))
+            code.emit(I.CALL())
+            
 
 def compile(program):
     return codegen(program)
+
+def print_bytecode(code: ByteCode):
+    for i, op in enumerate(code.insns):
+        match op:
+            case I.JMP(Label(offset)) | I.JMP_IF_TRUE(Label(offset)) | I.JMP_IF_FALSE(Label(offset)):
+                print(f"{i:=4} {op.__class__.__name__:<15} {offset}")
+            case I.LOAD(localID) | I.STORE(localID):
+                print(f"{i:=4} {op.__class__.__name__:<15} {localID}")
+            case I.PUSH(value):
+                print(f"{i:=4} {'PUSH':<15} {value}")
+            case I.PUSHFN(Label(offset)):
+                print(f"{i:=4} {'PUSHFN':<15} {offset}")
+            case _:
+                print(f"{i:=4} {op.__class__.__name__:<15}")
