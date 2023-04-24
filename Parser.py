@@ -791,7 +791,7 @@ class Parser:
             i+=1
         self.tokens.match(Operator("}"))
         if dicto[0][0] == None:
-            return dict_literal([()])
+            return dict_literal(([]))
         return dict_literal(dicto)
     
     def parse_let(self):
