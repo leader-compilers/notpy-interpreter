@@ -184,6 +184,10 @@ class I:
     class PUT:
         pass
 
+    @dataclass
+    class INPUT:
+        string:str
+
 
 Instruction = (
     I.PUSH
@@ -227,6 +231,7 @@ Instruction = (
     | I.PUT
     | I.LENGTH
     | I.FIND
+    | I.INPUT
 )
 
 
@@ -277,6 +282,9 @@ class VM:
         while True:
             assert self.ip < len(self.bytecode.insns)
             match self.bytecode.insns[self.ip]:
+                case I.INPUT(string):
+                    self.data.append(input(string))
+                    self.ip += 1
                 case I.PUSH(val):
                     self.data.append(val)
                     self.ip += 1
@@ -507,9 +515,9 @@ class VM:
                         self.data.append(data_structure[index])
                     elif isinstance(data_structure, dict):
                         key = self.data.pop()
-                        if key not in data_structure.keys():
-                            raise Exception("Key not found")
-                        self.data.append(data_structure[key])
+                        # if key not in data_structure.keys():
+                        #     raise Exception("Key not found")
+                        self.data.append(data_structure.get(key, -1))
                     else: 
                         raise Exception("Invalid type for lookup")
                     self.ip += 1
@@ -575,6 +583,8 @@ def do_codegen(
     match program:
         case numeric_literal(what) | bool_literal(what) | string_literal(what):
             code.emit(I.PUSH(what))
+        case input_statement(string):
+            code.emit(I.INPUT(string))
         case Lists(what):
             for i in what:
                 codegen_(i)

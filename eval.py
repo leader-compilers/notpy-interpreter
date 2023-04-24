@@ -13,7 +13,6 @@ def fresh():
     currentID = currentID + 1
     return currentID
 
-
 @dataclass
 class NumType:
     pass
@@ -50,6 +49,11 @@ class numeric_literal:
     def __init__(self, numerator, denominator=1):
         self.value = Fraction(numerator, denominator)
 
+
+@dataclass
+class input_statement:
+    string: str
+    type: NoneType = NoneType()
 
 @dataclass
 class bool_literal:
@@ -339,6 +343,8 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
 
         case Null():
             return 0
+        case input_statement(string):
+            return input(string)
         # Let Expressions
 
         case let_var(name):
@@ -619,12 +625,13 @@ def eval_ast(subprogram: AST, lexical_scope=None, name_space=None) -> Value:
                 index = int(index)
                 if(index >= len(data_structure)):
                     raise Exception("Index out of bounds")
+                else:
+                    return data_structure[index]
             elif isinstance(data_structure, dict):
-                if index not in data_structure:
-                    raise Exception("Key not in dictionary")
+                return data_structure.get(index, -1)
             else: 
                 raise Exception("Type does not support lookup")
-            return data_structure[index]
+
         case put(first, second, third):
             data_structure = eval_ast(first, lexical_scope, name_space)
             index = eval_ast(second, lexical_scope, name_space)

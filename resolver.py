@@ -29,6 +29,8 @@ def resolve(subprogram: AST, lexical_scope=None, name_space=None) -> AST:
             return bool_literal(value)
         case dict_literal(value):
             return dict_literal(value)
+        case input_statement(s):
+            return input_statement(s)
         case identifier(name):
             return name_space.get_from_scope(name)
         case let_var(name):

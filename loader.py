@@ -3,6 +3,7 @@ import Parser as p
 import eval as e
 import typechecking as t
 import resolver as r
+import os
 import bytecode as b
 
 
@@ -19,12 +20,19 @@ def main(filename):
     # print(ast)
     # print(resolvedast)
     # typedast = t.typecheck(resolvedast)
-    # output = e.eval_ast(ast)
+    output = e.eval_ast(ast)
     v = b.VM()
     v.load(b.compile(resolvedast))
-    #print(v.bytecode.insns)
+   # print(v.bytecode.insns)
     output = v.execute()
-    # print(output)
+# #     # print(output)
 
 
-main("tester/dict_test.txt")
+main("tester/e14_dict.txt")
+
+#call main on all the files in the tester folder
+# for filename in os.listdir("tester"):
+#     if filename.endswith(".txt"):
+#         print(filename)
+#         main("tester/" + filename)
+
