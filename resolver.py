@@ -27,6 +27,10 @@ def resolve(subprogram: AST, lexical_scope=None, name_space=None) -> AST:
             return string_literal(value)
         case bool_literal(value):
             return bool_literal(value)
+        case dict_literal(value):
+            return dict_literal(value)
+        case input_statement(s):
+            return input_statement(s)
         case identifier(name):
             return name_space.get_from_scope(name)
         case let_var(name):
@@ -130,14 +134,6 @@ def resolve(subprogram: AST, lexical_scope=None, name_space=None) -> AST:
             re1 = resolve_(e1)
             re2 = resolve_(e2)
             return list_initializer(re1, re2)
-
-        case dict_literal(val):
-            rval = {}
-            for k, v in val.items():
-                rk = resolve_(k)
-                rv = resolve_(v)
-                rval[rk] = rv
-            return dict_literal(rval)
         case u_dict_operation(op, e):
             re = resolve_(e)
             return u_dict_operation(op, re)

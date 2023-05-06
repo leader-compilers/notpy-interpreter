@@ -1,0 +1,22 @@
+
+
+var l=[1,2,3,4,5,6,7,8,9,10];
+
+var i=0;
+var j=0;
+var k=0;
+
+while(i<l.length){
+    var j=i+1;
+    while(j<l.length){
+        var k=j+1;
+        while(k<l.length){
+            if(l[i]+l[j]==l[k]){
+                print l[i],l[j],l[k];
+            }
+            k=k+1;
+        }
+        j=j+1;
+    }
+    i=i+1;
+}

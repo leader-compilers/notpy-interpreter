@@ -1,0 +1,19 @@
+
+
+def gcd(a, b){
+    var ans=0;
+    if (a==0){
+        ans=b;
+    }
+    else{
+        ans=gcd(b%a,a);
+    }
+    return ans;
+}
+
+
+var a=100;
+var b=50;
+
+var ans=gcd(a,b);
+print ans;

@@ -1,0 +1,25 @@
+
+var l=[23,56,76, 9, 10, 14, 15,100,110];
+
+var max=1;
+var i=0;
+
+while(i<l.length){
+    var j=i+1;
+    var count=1;
+    while(j<l.length){
+        if(l[j]>l[i]){
+            count=count+1;
+            i=j;
+            j=j+1;
+        }
+        else{
+            j=j+1;
+        }
+    }
+    if(count>max){
+        max=count;
+    }
+    i=i+1;
+}
+print max;

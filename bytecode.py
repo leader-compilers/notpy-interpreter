@@ -185,6 +185,10 @@ class I:
         pass
 
     @dataclass
+    class INPUT:
+        string: str
+
+    @dataclass
     class PUSHFN:
         entry: Label
 
@@ -239,9 +243,11 @@ Instruction = (
     | I.PUT
     | I.LENGTH
     | I.FIND
+    | I.INPUT
     | I.CALL
     | I.RETURN
     | I.PUSHFN
+
 )
 
 
@@ -262,6 +268,17 @@ class ByteCode:
         label.target = len(self.insns)
 
 
+# class Frame:
+#     locals: List[Value]
+
+#     def __init__(self):
+#         MAX_LOCALS = 32
+#         self.locals = [None] * MAX_LOCALS
+
+#global environment
+global_environment: dict[int:'Value'] = {}
+
+
 @dataclass
 class Frame:
     retaddr: int = -1
@@ -270,17 +287,6 @@ class Frame:
 @dataclass
 class beginFunction:
     entry: int
-
-
-# class Frame:
-#     locals: List[Value]
-
-#     def __init__(self):
-#         MAX_LOCALS = 32
-#         self.locals = [None] * MAX_LOCALS
-
-# global environment    
-global_environment: dict[int:'Value'] = {}
 
 
 class VM:
@@ -302,6 +308,9 @@ class VM:
         while True:
             assert self.ip < len(self.bytecode.insns)
             match self.bytecode.insns[self.ip]:
+                case I.INPUT(string):
+                    self.data.append(input(string))
+                    self.ip += 1
                 case I.PUSH(val):
                     self.data.append(val)
                     self.ip += 1
@@ -316,7 +325,6 @@ class VM:
                     self.ip = bf.entry
                 case I.RETURN():
                     self.ip = self.currentFrame.retaddr
-
                 case I.UMINUS():
                     op = self.data.pop()
                     self.data.append(-op)
@@ -432,7 +440,7 @@ class VM:
                 case I.STORE(localID):
                     v = self.data.pop()
                     global_environment[localID] = v
-                    # self.currentFrame.locals[localID] = v
+                    #self.currentFrame.locals[localID] = v
                     self.ip += 1
                 case I.PRINT():
                     print(self.data.pop())
@@ -543,9 +551,9 @@ class VM:
                         self.data.append(data_structure[index])
                     elif isinstance(data_structure, dict):
                         key = self.data.pop()
-                        if key not in data_structure.keys():
-                            raise Exception("Key not found")
-                        self.data.append(data_structure[key])
+                        # if key not in data_structure.keys():
+                        #     raise Exception("Key not found")
+                        self.data.append(data_structure.get(key, -1))
                     else:
                         raise Exception("Invalid type for lookup")
                     self.ip += 1
@@ -612,6 +620,8 @@ def do_codegen(
     match program:
         case numeric_literal(what) | bool_literal(what) | string_literal(what):
             code.emit(I.PUSH(what))
+        case input_statement(string):
+            code.emit(I.INPUT(string))
         case Lists(what):
             for i in what:
                 codegen_(i)
@@ -729,8 +739,8 @@ def do_codegen(
             codegen_(l)
             code.emit(I.LIST_EMPTY())
 
-        # We might need to add the I.STORE() instruction in these cases
-        # Might not as the parser will wrap it in set() or declare()
+        ## We might need to add the I.STORE() instruction in these cases
+        ## Might not as the parser will wrap it in set() or declare()
         case b_list_operation("cons", e, l):
             codegen_(e)
             codegen_(l)
@@ -768,9 +778,9 @@ def do_codegen(
             codegen_(x)
             code.emit(I.PUT())
             if(isinstance(x, get)):
-                code.emit(I.STORE(x.variable.id))
-            # This does not make sense as we only execute our AST once, so
-            # we won't have the value of x in the global environment
+               code.emit(I.STORE(x.variable.id))
+            ## This does not make sense as we only execute our AST once, so
+            ## we won't have the value of x in the global environment
             # if(isinstance(x, get) and isinstance(global_environment[x.variable.id], str)):
             #     code.emit(I.STORE(x.variable.id))
 

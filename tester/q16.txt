@@ -1,0 +1,65 @@
+def quickselect(nums,k){
+    var ans = 0;
+    var len = nums.length;
+    if(len == 1){
+        var v = nums[0];
+        ans = v;
+    }
+    var t = len // 2;
+    var pivot = nums[t];
+    var lows = list();
+    var highs = list();
+    var pivots = list();
+    var i = 0;
+    for(i=0;i<len;i=i+1){
+        if(nums[i]<pivot){
+            var temp = nums[i]; 
+            lows.append(temp);
+        }   
+    }
+    for(i=0;i<len;i=i+1){
+        if(nums[i]>pivot){
+            var temp = nums[i];
+            highs.append(temp);
+        }   
+    }
+    for(i=0;i<len;i=i+1){
+        if(nums[i]==pivot){
+            var temp = nums[i];
+            pivots.append(temp);
+        }   
+    }
+    if(k<lows.length){
+        ans = quickselect(lows, k);
+    }
+    else{
+        if(k<lows.length + pivots.length){
+            ans = pivots.head;
+        }
+        else{
+            var a = k - lows.length ;
+            var b = a - pivots.length;
+            ans = quickselect(highs, b);
+        }
+    }
+    return ans;
+}
+
+def quickselect_median(nums){
+    var ans = 0;
+    var len = nums.length;
+    var a = len//2;
+    if(len%2==1){
+        ans = quickselect(nums, a);
+    }
+    else{
+        var b = a - 1;
+        ans = quickselect(nums, a) + quickselect(nums, b);
+        ans = ans / 2;
+    }
+    return ans;
+}
+
+var nums = [1,2,3,4,5];
+var res = quickselect_median(nums);
+print res;
